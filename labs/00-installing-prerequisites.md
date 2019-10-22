@@ -70,3 +70,5 @@ Docker version 19.03.1, build 74b1e89
 If you will be completing the Kubernetes labs, [install the kubectl CLI](https://kubernetes.io/docs/tasks/tools/install-kubectl/). It isn't necessary to configure it to speak to a cluster &mdash; you will do that during the appropriate labs that require it.
 
 ## Next Steps
+
+* [Infrastructure as Code Basics](./01-basics/01-creating-a-new-project.md)

@@ -2,7 +2,7 @@
 
 ## Course Outline
 
-* [Installing Prerequisites](./labs/installing-prerequisites)
+* [Installing Prerequisites](./labs/00-installing-prerequisites.md)
 
 ### Infrastructure as Code Basics
 
