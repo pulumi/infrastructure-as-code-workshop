@@ -6,14 +6,14 @@
 
 ### Infrastructure as Code Basics
 
-1. Creating a New Project
-2. Configuring AWS
-3. Provisioning an S3 Bucket
-4. Updating your S3 Bucket
-5. Making your Stack Configurable
+1. [Creating a New Project](./labs/01-basics/01-creating-a-new-project.md)
+2. [Configuring AWS](./labs/01-basics/02-configuring-aws.md)
+3. [Provisioning Infrastructure](./labs/01-basics/03-provisioning-infrastructure.md)
+4. [Updating your Infrastructure](./labs/01-basics/04-updating-your-infrastructure.md)
+5. Making Your Stack Configurable
 6. Creating a Second Stack
 7. Serving a Static Website from your S3 Bucket
-8. Destroying your Infrastructure
+8. Destroying Your Infrastructure
 
 ### Building a Foundation
 
@@ -22,22 +22,22 @@
 3. Provisioning an RDS MySQL Database
 4. Provisioning a EC2 Virtual Machine
 5. Scaling and Load Balancing your Application
-6. Destroying your Infrastructure
+6. Destroying Your Infrastructure
 
 ### Deploying Container Workloads
 
 1. Provisioning an ECS "Fargate" Service
 2. Building and Deploying a Docker Container Image to ECR
 3. Deploying a New Container Image to ECR and ECS
-4. Destroying your Infrastructure
+4. Destroying Your Infrastructure
 
 ### Kubernetes Clusters and Applications
 
 1. Provisioning an EKS Cluster
 2. Deploying a Simple Kubernetes Application
-3. Updating your Application Configuration
+3. Updating Your Application Configuration
 4. Deploying a Helm Chart
-5. Destroying your Infrastructure
+5. Destroying Your Infrastructure
 
 ### Serverless Application Patterns
 
