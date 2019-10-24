@@ -10,10 +10,9 @@
 2. [Configuring AWS](./labs/01-basics/02-configuring-aws.md)
 3. [Provisioning Infrastructure](./labs/01-basics/03-provisioning-infrastructure.md)
 4. [Updating your Infrastructure](./labs/01-basics/04-updating-your-infrastructure.md)
-5. Making Your Stack Configurable
-6. Creating a Second Stack
-7. Serving a Static Website from your S3 Bucket
-8. Destroying Your Infrastructure
+5. [Making Your Stack Configurable](./labs/01-basics-05-making-your-stack-configurable.md)
+6. [Creating a Second Stack](./labs/01-basics-06-creating-a-second-stack.md)
+7. [Destroying Your Infrastructure](./labs/01-basics-07-destroying-your-infrastructure.md)
 
 ### Building a Foundation
 
