@@ -253,22 +253,37 @@ Duration: 16s
 Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/2
 ```
 
-Check that we now have three replicas, using your chosen namespace from earlier:
+Query the pods again using your chosen namespace from earlier:
 
 ```bash
 kubectl get pods --namespace joe-duffy
 ```
 
+Check that there are now three:
+
+```
+NAME                               READY   STATUS    RESTARTS   AGE
+app-dep-8r1febnu-6cd57d964-c76rx   1/1     Running   0          8m45s
+app-dep-8r1febnu-6cd57d964-rdpn6   1/1     Running   0          8m35s
+app-dep-8r1febnu-6cd57d964-tj6m4   1/1     Running   0          8m56s
+```
+
 Finally, curl the endpoint again:
 
 ```bash
-open $(pulumi stack output url)
+curl $(pulumi stack output url)
 ```
 
 And verify that the output now ends in `v=2`, instead of `v=1` (the result of the new container image):
 
 ```
-Hello Kubernetes bootcamp! | Running on: app-dep-8r1febnu-66bffbf565-vx9kv | v=2
+Hello Kubernetes bootcamp! | Running on: app-dep-8r1febnu-6cd57d964-c76rx | v=2
+```
+
+If you'd like, do it a few more times, and observe that traffic will be load balanced across the three pods:
+
+```bash
+for i in {0..10}; do curl $(pulumi stack output url); done
 ```
 
 ## Step 7 — Destroy Everything
