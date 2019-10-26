@@ -1,8 +1,33 @@
-# Deploying Containers to Elastic Kubernetes Service (EKS)
+# Deploying Containers to a Kubernetes Cluster
+
+In this lab, you will deploy a containerized application to a Kubernetes cluster.
+
+> This lab assumes you have a project set up. If you don't yet, please [complete this lab first](../01-iac/01-creating-a-new-project.md).
+
+## Step 1 — Configure Access to a Cluster
 
 Amazon EKS offers managed Kubernetes cluster hosting. This makes it easier to create and manage new clusters compared to doing so by hand. In this lab, you will deploy a load-balanced, containzerized application to an existing Kubernetes cluster.
 
-## Step 1 — Install the Kubernetes Package
+If you are participating in an interactive workshop, you will most likely be given access to an existing EKS cluster. Save the `kubeconfig` file you were given to `~/iac-workshop/kubeconfig`.
+
+> If you do not have an EKS cluster, you can create one by following the steps [here](https://github.com/pulumi/examples/tree/master/aws-ts-eks).
+
+Point the `KUBECONFIG` environment variable at your cluster configuration file:
+
+```bash
+export KUBECONFIG=~/iac-workshop/kubeconfig
+```
+
+To test out connectivity, run `kubectl cluster-info`. You should see information similar to this:
+
+```
+Kubernetes master is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com
+Heapster is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/heapster/proxy
+CoreDNS is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+monitoring-influxdb is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/monitoring-influxdb/proxy
+```
+
+## Step 2 — Install the Kubernetes Package
 
 From your project's root directory, install the Kubernetes package:
 
@@ -16,7 +41,7 @@ Next, add an import to an empty `index.ts` file:
 import * as k8s from "@pulumi/kubernetes";
 ```
 
-## Step 2 — Declare Your Application's Namespace Object
+## Step 3 — Declare Your Application's Namespace Object
 
 First, declare a [namespace object](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/). This will scope your objects to a name of your choosing, so that in this workshop you won't accidentally interfere with other participants.
 
@@ -28,7 +53,7 @@ const ns = new k8s.core.v1.Namespace("app-ns", {
 });
 ```
 
-## Step 3 — Declare Your Application's Deployment Object
+## Step 4 — Declare Your Application's Deployment Object
 
 You'll now declare a [deployment object](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), which deploys a specific set of containers to the cluster and scales them. In this case, you'll deploy the pre-built `gcr.io/google-samples/kubernetes-bootcamp:v1` container image with only a single replica.
 
@@ -55,7 +80,7 @@ const deployment = new k8s.apps.v1.Deployment("app-dep", {
 });
 ```
 
-## Step 4 — Declare Your Application's Service Object
+## Step 5 — Declare Your Application's Service Object
 
 Next, you'll declare a [service object](https://kubernetes.io/docs/concepts/services-networking/service/), which enables networking and load balancing across your deployment replicas.
 
@@ -82,24 +107,7 @@ const port = service.spec.ports[0].port;
 export const url = pulumi.interpolate`http://${address}:${port}`;
 ```
 
-## Step 5 — Deploy Everything
-
-To deploy your application, make sure you are targeting the right cluster. This can be done by pointing the `KUBECONFIG` environment variable at a cluster configuration file.
-
-```bash
-export KUBECONFIG=<path to kubeconfig>
-```
-
-To test out connectivity, run `kubectl cluster-info`. You should see information similar to this:
-
-```
-Kubernetes master is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com
-Heapster is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/heapster/proxy
-CoreDNS is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
-monitoring-influxdb is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/monitoring-influxdb/proxy
-```
-
-Next, deploy everything:
+## Step 6 — Deploy Everything
 
 ```bash
 pulumi up
@@ -154,7 +162,7 @@ Hello Kubernetes bootcamp! | Running on: app-dep-8r1febnu-66bffbf565-vx9kv | v=1
 
 > Kubernetes does not wait until the AWS load balancer is fully initialized, so it may take a few minutes before it becomes available.
 
-## Step 6 — Update Your Application Configuration
+## Step 7 — Update Your Application Configuration
 
 Next, you'll make two changes to the application:
 
@@ -286,7 +294,7 @@ If you'd like, do it a few more times, and observe that traffic will be load bal
 for i in {0..10}; do curl $(pulumi stack output url); done
 ```
 
-## Step 7 — Destroy Everything
+## Step 8 — Destroy Everything
 
 Finally, destroy the resources and the stack itself:
 
