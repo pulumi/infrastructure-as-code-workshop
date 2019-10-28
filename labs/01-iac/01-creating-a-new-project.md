@@ -11,6 +11,8 @@ mkdir iac-workshop
 cd iac-workshop
 ```
 
+> Pulumi will use the directory name as your project name by default. To create an independent project, simply name the directory differently.
+
 ## Step 2 &mdash; Initialize Your Project
 
 A Pulumi project is just a directory with some files in it. It's possible for you to create a new one by hand. The `pulumi new` command, however, automates the process:
