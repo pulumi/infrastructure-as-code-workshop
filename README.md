@@ -24,8 +24,8 @@ The first lab takes you on a tour of infrastructure as code concepts:
 
 The second lab takes you on a tour of cloud architectures, including VMs, containers, and serverless:
 
-1. [Provisioning EC2 Virtual Machines](./labs/01-app-arch/02-provisioning-vms.md)
-3. [Deploying Containers to Elastic Container Service (ECS) "Fargate"](./labs/02-app-arch/04-containers-on-ecs.md)
+1. [Provisioning EC2 Virtual Machines](./labs/02-app-arch/01-provisioning-vms.md)
+3. [Deploying Containers to Elastic Container Service (ECS) "Fargate"](./labs/02-app-arch/02-containers-on-ecs.md)
 4. [Deploying Containers to a Kubernetes Cluster](./labs/02-app-arch/03-containers-on-kubernetes.md)
 5. [Using AWS Lambda for Serverless Application Patterns](./labs/02-app-arch/04-lambda-serverless.md)
 
