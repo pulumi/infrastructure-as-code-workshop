@@ -39,6 +39,8 @@ const myObject = new aws.s3.BucketObject("index.html", {
 ...
 ```
 
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./04-updating-your-infrastructure/step1.ts).
+
 Deploy the changes:
 
 ```bash
@@ -77,8 +79,6 @@ Notice that your `index.html` file has been added:
 2019-10-22 16:50:54        68 index.html
 ```
 
-> :white_check_mark: After completing this step, your `index.ts` should [look like this](./04-updating-your-infrastructure/step1.ts).
-
 ## Step 2 &mdash; Serve Content From Your Bucket as a Website
 
 To serve content from your bucket as a website, you'll need to update a few properties.
@@ -116,7 +116,7 @@ export const bucketEndpoint = pulumi.interpolate`http://${myBucket.websiteEndpoi
 ...
 ```
 
-> :white_check_mark: At this point, your `index.ts` should [look like this](./04-updating-your-infrastructure/step2.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./04-updating-your-infrastructure/step2.ts).
 
 Now deploy the changes:
 
@@ -198,8 +198,6 @@ Duration: 7s
 
 Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/4
 ```
-
-> :white_check_mark: After completing this step, your `index.ts` should [look like this](./04-updating-your-infrastructure/step2.ts).
 
 ## Step 3 &mdash; Access Your Website
 

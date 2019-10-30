@@ -42,7 +42,7 @@ To make matters interesting, rename the `site` directory to `www`:
 mv site www
 ```
 
-> :white_check_mark: After completing this step, your `index.ts` should [look like this](./05-making-your-stack-configurable/step2.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./05-making-your-stack-configurable/step2.ts).
 
 ## Step 3 &mdash; Deploying the Changes
 
@@ -131,6 +131,8 @@ Add a new file, `about.html`, to the `www` directory:
 </html>
 ```
 
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./05-making-your-stack-configurable/step4.ts).
+
 Perform a deployment:
 
 ```bash
@@ -155,8 +157,6 @@ curl $(pulumi stack output bucketEndpoint)/about.html
 ```
 
 And you will see the contents added above.
-
-> :white_check_mark: After completing this step, your `index.ts` should [look like this](./05-making-your-stack-configurable/step4.ts).
 
 ## Next Steps
 

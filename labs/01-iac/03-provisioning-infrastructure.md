@@ -11,7 +11,7 @@ Add the following to your `index.ts` file:
 const myBucket = new aws.s3.Bucket("my-bucket");
 ```
 
-> :white_check_mark: After completing this step, your `index.ts` should [look like this](./03-provisioning-infrastructure/step1.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./03-provisioning-infrastructure/step1.ts).
 
 ## Step 2 &mdash; Preview Your Changes
 
@@ -91,6 +91,8 @@ Programs can export variables which will be shown in the CLI and recorded for ea
 export const bucketName = myBucket.bucket;
 ```
 
+> :white_check_mark: After this change, your `index.ts` should [look like this](./03-provisioning-infrastructure/step4.ts).
+
 Now deploy the changes:
 
 ```bash
@@ -114,8 +116,6 @@ Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/2
 ```
 
 > The difference between logical and physical names is in part due to "auto-naming" which Pulumi does to ensure side-by-side projects and zero-downtime upgrades work seamlessly. It can be disabled if you wish; [read more about auto-naming here](https://www.pulumi.com/docs/intro/concepts/programming-model/#autonaming).
-
-> :white_check_mark: After completing this step, your `index.ts` should [look like this](./03-provisioning-infrastructure/step4.ts).
 
 ## Step 5 &mdash; Inspect Your New Bucket
 
