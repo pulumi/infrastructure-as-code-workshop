@@ -4,7 +4,7 @@ In this lab, you will create a serverless web application that uses API Gateway 
 
 > This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete labs [1](../01-iac/01-creating-a-new-project.md) and [2](../01-iac/02-configuring-aws.md) first.
 
-## Step 1 — Install Dependencies
+## Step 1 &mdash; Install Dependencies
 
 To start, install the AWS SDK package. This will allow you to query your DynamoDB table from your Lambda:
 
@@ -23,7 +23,7 @@ import * as pulumi from "@pulumi/pulumi";
 
 > :white_check_mark: After completing this step, your `index.ts` file should [look like this](./code/step1.ts).
 
-## Step 2 — Create a DynamoDB Table
+## Step 2 &mdash; Create a DynamoDB Table
 
 Now define your DynamoDB table. This provisions a serverless NoSQL database table where you only pay for what you use:
 
@@ -40,7 +40,7 @@ The schema for this table is quite simple because this instance will only store 
 
 > :white_check_mark: After completing this step, your `index.ts` file should [look like this](./code/step2.ts).
 
-## Step 3 — Create IAM Policies
+## Step 3 &mdash; Create IAM Policies
 
 Before creating your website, the Lambda will need a certain IAM role and permission. This permits the Lambda's function to assume the right identity at runtime, log into CloudWatch to aid with debugging, and to use the DynamoDB table defined above:
 
@@ -87,7 +87,7 @@ const handlerPolicy = new aws.iam.RolePolicy("handler-policy", {
 
 > :white_check_mark: After completing this step, your `index.ts` file should [look like this](./code/step3.ts).
 
-## Step 4 — Create a Lambda-Based API Gateway
+## Step 4 &mdash; Create a Lambda-Based API Gateway
 
 Now create an API Gateway powered by Lambda for its sole REST API handler for `GET` requests at the `/` route.
 
@@ -145,7 +145,7 @@ Notice this definition references the code stored in `handler/index.js` file thr
 
 > :white_check_mark: After completing this step, your `index.ts` file should [look like this](./code/step4.ts).
 
-## Step 5 — Deploy Everything
+## Step 5 &mdash; Deploy Everything
 
 To provision everything, run:
 
@@ -202,7 +202,7 @@ Notice that the counter increases:
 <p>5 hits.</p>
 ```
 
-## Step 6 — Replace the App with Inline Code
+## Step 6 &mdash; Replace the App with Inline Code
 
 It's possible to simplify this serverless application by moving the runtime code into the infrastructure definition. This isn't always the right way to design your infrastructure as code, but for "fully serverless" applications like this one, where the boundary between application and infrastructure is intentionally blurred, this can be a great way to go.
 
@@ -299,7 +299,7 @@ Because we reused the same table from the prior update, the counter has continue
 
 > :white_check_mark: After completing this step, your `index.ts` file should [look like this](./code/step6.ts).
 
-## Step 7 — Destroy Everything
+## Step 7 &mdash; Destroy Everything
 
 Finally, destroy the resources and the stack itself:
 

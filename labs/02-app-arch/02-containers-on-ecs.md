@@ -1,8 +1,10 @@
 # Deploying Containers to Elastic Container Service (ECS)
 
+In this lab, you will deploy a containerized application to an AWS ECS cluster.
+
 > This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete labs [1](../01-iac/01-creating-a-new-project.md) and [2](../01-iac/02-configuring-aws.md) first.
 
-## Step 1 — Create an ECS Cluster
+## Step 1 &mdash; Create an ECS Cluster
 
 Import the AWS and Pulumi packages in an empty `index.ts` file:
 
@@ -18,7 +20,7 @@ And now create a new ECS cluster. You will use the default values, so doing so i
 const cluster = new awsx.ecs.Cluster("cluster");
 ```
 
-## Step 2 — Create a Load-Balanced Container Service
+## Step 2 &mdash; Create a Load-Balanced Container Service
 
 Next, allocate the application load balancer (ALB) and listen for HTTP traffic port 80. Make sure to pass along the ECS cluster's security groups:
 
@@ -26,7 +28,9 @@ Next, allocate the application load balancer (ALB) and listen for HTTP traffic p
 ...
 const alb = new awsx.elasticloadbalancingv2.ApplicationLoadBalancer(
     "app-lb", { external: true, securityGroups: cluster.securityGroups });
-const web = alb.createListener("web", { port: 80, external: true });
+const atg = alb.createTargetGroup(
+    "app-tg", { port: 80, deregistrationDelay: 0 });
+const web = atg.createListener("web", { port: 80 });
 ```
 
 Now declare the ECS service that will use "Fargate," meaning you don't need to manage the servers behind your ECS cluster. It will run the `"nginx"` image from the Docker Hub.
@@ -47,7 +51,7 @@ const appService = new awsx.ecs.FargateService("app-svc", {
 export const url = pulumi.interpolate`${web.endpoint.hostname}`;
 ```
 
-## Step 3 — Provision the Cluster and Service
+## Step 3 &mdash; Provision the Cluster and Service
 
 Deploy the program to stand up your initial cluster and service:
 
@@ -86,8 +90,8 @@ Updating (dev):
  +   │  ├─ aws:iam:RolePolicyAttachment            app-svc-task-32be53a2          created
  +   │  └─ aws:ecs:TaskDefinition                  app-svc                        created
  +   └─ aws:lb:ApplicationLoadBalancer             app-lb                         created
- +      ├─ awsx:lb:ApplicationTargetGroup          web                            created
- +      │  └─ aws:lb:TargetGroup                   web                            created
+ +      ├─ awsx:lb:ApplicationTargetGroup          app-tg                         created
+ +      │  └─ aws:lb:TargetGroup                   app-tg                         created
  +      ├─ awsx:lb:ApplicationListener             web                            created
  +      │  ├─ awsx:x:ec2:EgressSecurityGroupRule   web-external-0-egress          created
  +      │  │  └─ aws:ec2:SecurityGroupRule         web-external-0-egress          created
@@ -123,7 +127,7 @@ And you'll see the Nginx default homepage:
 ...
 ```
 
-## Step 3 — Build and Publish a Private Container Image
+## Step 3 &mdash; Build and Publish a Private Container Image
 
 Add a few new files. First, `app/site/index.html`:
 
@@ -147,11 +151,7 @@ FROM nginx
 COPY site /usr/share/nginx/html
 ```
 
-Now, change the image from `"nginx"` to a custom build of a local `Dockerfile` published to a private ECR registry.
-
-First
-
-Now, add a build step right before the Fargate service definition:
+Now, you will change the image from `"nginx"` to a custom build of a local `Dockerfile` published to a private ECR registry. Add a build step right before the Fargate service definition:
 
 ```typescript
 ...
@@ -167,9 +167,7 @@ And replace the image name `"nginx"` with a reference to the resulting built ima
 ...
 ```
 
-## Step 4 — (Optional) Update the Container
-
-> **Note:** This step takes about 10 minutes to deploy, due to Fargate rolling updates. If you don't have enough time to complete this step, feel free to skip it and come back afterwards.
+## Step 4 &mdash; Update the Service
 
 Now, also update the desired container count from `1` to `3`:
 
@@ -233,7 +231,7 @@ The result will contain the updated HTML:
 </html>
 ```
 
-## Step 5 — Destroy Everything
+## Step 5 &mdash; Destroy Everything
 
 Finally, destroy the resources and the stack itself:
 

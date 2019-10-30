@@ -1,8 +1,10 @@
 # Provisioning EC2 Virtual Machines
 
+In this lab, you'll first create a single EC2 virtual machine (VM). Afterwards, you'll scale that out to a VM per availability zone in your region, and then add a load balancer to spread load across the entire fleet.
+
 > This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete labs [1](../01-iac/01-creating-a-new-project.md) and [2](../01-iac/02-configuring-aws.md) first.
 
-## Step 1 — Declare the VM
+## Step 1 &mdash;  Declare the VM
 
 Import the AWS package in an empty `index.ts` file:
 
@@ -54,7 +56,9 @@ export const ip = server.publicIp;
 export const hostname = server.publicDns;
 ```
 
-## Step 1 — Provision the VM and Access It
+> :white_check_mark: After completing this step, your `index.ts` file should look like this.
+
+## Step 2 &mdash; Provision the VM and Access It
 
 To provision the VM, run:
 
@@ -96,7 +100,7 @@ Either way you should see a response from the Python webserver:
 Hello, World!
 ```
 
-## Step 2 – Create Multiple Virtual Machines
+## Step 3 – Create Multiple Virtual Machines
 
 Now you will create multiple VM instances, each running the same Python webserver, across all AWS availability zones in your region. Replace the part of your code that creates the webserver and exports the resulting IP address and hostname with the following:
 
@@ -182,7 +186,7 @@ Hello, World -- from eu-central-1b!
 Hello, World -- from eu-central-1c!
 ```
 
-## Step 3 — Create a Load Balancer
+## Step 4 &mdash; Create a Load Balancer
 
 Needing to loop over the webservers isn't very realistic. You will now create a load balancer over them to distribute load evenly.
 
@@ -324,7 +328,7 @@ Hello, World -- from eu-central-1c!
 Hello, World -- from eu-central-1b!
 ```
 
-## Step 4 — Destroy Everything
+## Step 5 &mdash; Destroy Everything
 
 Finally, destroy the resources and the stack itself:
 

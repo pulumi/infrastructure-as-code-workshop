@@ -2,6 +2,8 @@
 
 This workshop teaches you Infrastructure as Code concepts through a series of hands-on labs. Topics covered include IaC fundamentals, in addition to application architectures and how to use IaC to create, update, and manage them.
 
+This workshop uses AWS although most concepts are applicable no matter what cloud provider you are using.
+
 ## Course Outline
 
 Before proceeding, ensure your machine is ready to go:
@@ -41,5 +43,6 @@ After completing these labs, there are several topics you may want to explore.
 * [Continuous delivery](https://www.pulumi.com/docs/guides/continuous-delivery/)
 * [Secrets management](https://www.pulumi.com/blog/managing-secrets-with-pulumi/)
 * [Multi-project infrastructure architectures](https://www.pulumi.com/blog/architect-aws-application-infra-with-pulumi-stack-references/)
+* [Test-driven infrastructure](https://www.pulumi.com/blog/unit-testing-infrastructure-in-nodejs-and-mocha/)
 
 Thank you for checking out the Infrastructure as Code Workshop! More labs are on their way. Please [file an issue](https://github.com/joeduffy/infrastructure-as-code-workshop/issues/new) if there are topics you'd like to see covered in the future.
