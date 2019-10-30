@@ -42,7 +42,7 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./02-containers-on-kubernetes/step2.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-containers-on-kubernetes/step2.ts).
 
 ## Step 3 &mdash; Declare Your Application's Namespace Object
 
@@ -56,7 +56,7 @@ const ns = new k8s.core.v1.Namespace("app-ns", {
 });
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./02-containers-on-kubernetes/step3.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-containers-on-kubernetes/step3.ts).
 
 ## Step 4 &mdash; Declare Your Application's Deployment Object
 
@@ -85,7 +85,7 @@ const deployment = new k8s.apps.v1.Deployment("app-dep", {
 });
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./02-containers-on-kubernetes/step4.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-containers-on-kubernetes/step4.ts).
 
 ## Step 5 &mdash; Declare Your Application's Service Object
 
@@ -114,7 +114,7 @@ const port = service.spec.ports[0].port;
 export const url = pulumi.interpolate`http://${address}:${port}`;
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./02-containers-on-kubernetes/step5.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/03-containers-on-kubernetes/step5.ts).
 
 ## Step 6 &mdash; Deploy Everything
 
@@ -196,7 +196,7 @@ And then update its image to:
 ...
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./02-containers-on-kubernetes/step7.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-containers-on-kubernetes/step7.ts).
 
 Deploy your updates:
 

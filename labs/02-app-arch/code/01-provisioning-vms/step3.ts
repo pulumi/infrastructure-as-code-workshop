@@ -18,7 +18,7 @@ export const hostnames: any[] = [];
 for (const az of aws.getAvailabilityZones().names) {
     const server = new aws.ec2.Instance(`web-server-${az}`, {
         instanceType: "t2.micro",
-        securityGroups: alb.securityGroups.map(sg => sg.securityGroup.name),
+        securityGroups: [ sg.name ],
         ami: ami,
         availabilityZone: az,
         userData: "#!/bin/bash\n"+
@@ -28,8 +28,4 @@ for (const az of aws.getAvailabilityZones().names) {
     });
     ips.push(server.publicIp);
     hostnames.push(server.publicDns);
-
-    alb.attachTarget(`web-target-${az}`, server);
 }
-
-export const url = listener.endpoint.hostname;

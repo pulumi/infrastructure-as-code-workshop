@@ -26,7 +26,7 @@ And now create a new ECS cluster. You will use the default values, so doing so i
 const cluster = new awsx.ecs.Cluster("cluster");
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./02-containers-on-ecs/step1.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/02-containers-on-ecs/step1.ts).
 
 ## Step 2 &mdash; Create a Load-Balanced Container Service
 
@@ -59,7 +59,7 @@ const appService = new awsx.ecs.FargateService("app-svc", {
 export const url = pulumi.interpolate`${web.endpoint.hostname}`;
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./02-containers-on-ecs/step2.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/02-containers-on-ecs/step2.ts).
 
 ## Step 3 &mdash; Provision the Cluster and Service
 
@@ -177,7 +177,7 @@ And replace the image name `"nginx"` with a reference to the resulting built ima
 ...
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./02-containers-on-ecs/step4.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/02-containers-on-ecs/step4.ts).
 
 ## Step 5 &mdash; Update the Service
 
@@ -189,7 +189,7 @@ Now, also update the desired container count from `1` to `3`:
 ...
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./02-containers-on-ecs/step5.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/02-containers-on-ecs/step5.ts).
 
 Next update the stack:
 

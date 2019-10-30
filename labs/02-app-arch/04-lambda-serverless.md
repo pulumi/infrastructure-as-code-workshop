@@ -21,7 +21,7 @@ import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./04-lambda-serverless/step1.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/04-lambda-serverless/step1.ts).
 
 ## Step 2 &mdash; Create a DynamoDB Table
 
@@ -38,7 +38,7 @@ const hits = new aws.dynamodb.Table("hits", {
 
 The schema for this table is quite simple because this instance will only store a single global counter for the entire website.
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./04-lambda-serverless/step2.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/04-lambda-serverless/step2.ts).
 
 ## Step 3 &mdash; Create IAM Policies
 
@@ -85,7 +85,7 @@ const handlerPolicy = new aws.iam.RolePolicy("handler-policy", {
 });
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./04-lambda-serverless/step3.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/04-lambda-serverless/step3.ts).
 
 ## Step 4 &mdash; Create a Lambda-Based API Gateway
 
@@ -141,7 +141,7 @@ const site = new awsx.apigateway.API("site", {
 export const url = site.url;
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./04-lambda-serverless/step4.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/04-lambda-serverless/step4.ts).
 
 Notice this definition references the code stored in `handler/index.js` file through the use of an "asset" &mdash; a mechanism for packaging up files and directories for use by your infrastructure. At the end, your API's base URL will be printed out.
 
@@ -239,7 +239,7 @@ const site = new awsx.apigateway.API("site", {
 
 Remember to keep the line at the end to export the `url`. It is safe to also delete the `handler/index.js` file altogether now.
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./04-lambda-serverless/step6.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/04-lambda-serverless/step6.ts).
 
 Next, run an update:
 

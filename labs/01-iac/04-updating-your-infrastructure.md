@@ -39,7 +39,7 @@ const myObject = new aws.s3.BucketObject("index.html", {
 ...
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./04-updating-your-infrastructure/step1.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/04-updating-your-infrastructure/step1.ts).
 
 Deploy the changes:
 
@@ -116,7 +116,7 @@ export const bucketEndpoint = pulumi.interpolate`http://${myBucket.websiteEndpoi
 ...
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./04-updating-your-infrastructure/step2.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/04-updating-your-infrastructure/step2.ts).
 
 Now deploy the changes:
 

@@ -56,7 +56,7 @@ export const ip = server.publicIp;
 export const hostname = server.publicDns;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./01-provisioning-vms/step1.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/01-provisioning-vms/step1.ts).
 
 ## Step 2 &mdash; Provision the VM and Access It
 
@@ -124,7 +124,7 @@ for (const az of aws.getAvailabilityZones().names) {
 }
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./01-provisioning-vms/step3.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/01-provisioning-vms/step3.ts).
 
 Now run a command to update your stack with the new resource definitions:
 
@@ -239,7 +239,7 @@ export const hostnames: any[] = [];
 for (const az of aws.getAvailabilityZones().names) {
     const server = new aws.ec2.Instance(`web-server-${az}`, {
         instanceType: "t2.micro",
-        securityGroups: alb.securityGroups.map(sg => sg.securityGroup.name),
+        securityGroups: [ sg.name ],
         ami: ami,
         availabilityZone: az,
         userData: "#!/bin/bash\n"+
@@ -256,7 +256,7 @@ for (const az of aws.getAvailabilityZones().names) {
 export const url = listener.endpoint.hostname;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./01-provisioning-vms/step4.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/01-provisioning-vms/step4.ts).
 
 Deploy these updates:
 

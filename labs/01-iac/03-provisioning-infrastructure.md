@@ -11,7 +11,7 @@ Add the following to your `index.ts` file:
 const myBucket = new aws.s3.Bucket("my-bucket");
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./03-provisioning-infrastructure/step1.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step1.ts).
 
 ## Step 2 &mdash; Preview Your Changes
 
@@ -91,7 +91,7 @@ Programs can export variables which will be shown in the CLI and recorded for ea
 export const bucketName = myBucket.bucket;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./03-provisioning-infrastructure/step4.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step4.ts).
 
 Now deploy the changes:
 
