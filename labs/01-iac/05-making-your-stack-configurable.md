@@ -36,13 +36,13 @@ const myObject = new aws.s3.BucketObject("index.html", {
 });
 ```
 
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./05-making-your-stack-configurable/step2.ts).
+
 To make matters interesting, rename the `site` directory to `www`:
 
 ```bash
 mv site www
 ```
-
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./05-making-your-stack-configurable/step2.ts).
 
 ## Step 3 &mdash; Deploying the Changes
 
