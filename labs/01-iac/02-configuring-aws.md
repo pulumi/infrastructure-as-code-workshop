@@ -31,6 +31,8 @@ Configure the AWS region you would like to deploy to:
 pulumi config set aws:region us-east-1
 ```
 
+> If you are doing an interactive lab, please use the recommended region. This will ensure AWS limits are not exceeded during the labs.
+
 Feel free to choose any AWS region that supports the services used in these labs ([see this table](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions) for a list of available regions).
 
 ## (Optional) Step 4 &mdash; Configure an AWS Profile
