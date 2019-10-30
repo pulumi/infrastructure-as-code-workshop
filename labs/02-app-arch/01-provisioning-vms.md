@@ -56,7 +56,7 @@ export const ip = server.publicIp;
 export const hostname = server.publicDns;
 ```
 
-> :white_check_mark: After completing this step, your `index.ts` file should look like this.
+> :white_check_mark: After this change, your `index.ts` should [look like this](./01-provisioning-vms/step1.ts).
 
 ## Step 2 &mdash; Provision the VM and Access It
 
@@ -123,6 +123,8 @@ for (const az of aws.getAvailabilityZones().names) {
     hostnames.push(server.publicDns);
 }
 ```
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./01-provisioning-vms/step3.ts).
 
 Now run a command to update your stack with the new resource definitions:
 
@@ -202,11 +204,15 @@ And import this package at the top of your program:
 import * as awsx from "@pulumi/awsx";
 ```
 
-Delete the port 80 `ingress` rule from your security group:
+Delete the port 80 `ingress` rule from your security group, leaving behind only the ICMP rule:
 
 ```typescript
 ...
-        { protocol: "tcp", fromPort: 80, toPort: 80, cidrBlocks: ["0.0.0.0/0"] },
+const sg = new aws.ec2.SecurityGroup("web-secgrp", {
+    ingress: [
+        { protocol: "icmp", fromPort: 8, toPort: 0, cidrBlocks: ["0.0.0.0/0"] },
+    ],
+});
 ...
 ```
 
@@ -249,6 +255,8 @@ for (const az of aws.getAvailabilityZones().names) {
 
 export const url = listener.endpoint.hostname;
 ```
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./01-provisioning-vms/step4.ts).
 
 Deploy these updates:
 
@@ -338,3 +346,13 @@ pulumi stack rm
 ```
 
 ## Next Steps
+
+Congratulations! :tada: You have stood up an EC2 VM, scaled it out across multiple availability zones, and configured a load balancer to spread traffic across all of your instances.
+
+Next, choose amongst these labs:
+
+* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../02-app-arch/02-containers-on-ecs.md)
+* [Deploying Containers to a Kubernetes Cluster](../02-app-arch/03-containers-on-kubernetes.md)
+* [Using AWS Lambda for Serverless Application Patterns](../02-app-arch/04-lambda-serverless.md)
+
+Or view the [suggested next steps](/#next-steps) after completing all labs.

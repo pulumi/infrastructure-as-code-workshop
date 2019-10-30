@@ -6,10 +6,16 @@ In this lab, you will deploy a containerized application to an AWS ECS cluster.
 
 ## Step 1 &mdash; Create an ECS Cluster
 
-Import the AWS and Pulumi packages in an empty `index.ts` file:
+Install the AWSX package, if you haven't already:
+
+```bash
+npm install @pulumi/awsx
+```
+
+Import the AWSX and Pulumi packages in an empty `index.ts` file:
 
 ```typescript
-import * as aws from "@pulumi/aws";
+import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
 ```
 
@@ -19,6 +25,8 @@ And now create a new ECS cluster. You will use the default values, so doing so i
 ...
 const cluster = new awsx.ecs.Cluster("cluster");
 ```
+
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./02-containers-on-ecs/step1.ts).
 
 ## Step 2 &mdash; Create a Load-Balanced Container Service
 
@@ -41,7 +49,7 @@ const appService = new awsx.ecs.FargateService("app-svc", {
     cluster,
     taskDefinitionArgs: {
         container: {
-            image: containerImage,
+            image: "nginx",
             portMappings: [ web ],
         },
     },
@@ -50,6 +58,8 @@ const appService = new awsx.ecs.FargateService("app-svc", {
 
 export const url = pulumi.interpolate`${web.endpoint.hostname}`;
 ```
+
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./02-containers-on-ecs/step2.ts).
 
 ## Step 3 &mdash; Provision the Cluster and Service
 
@@ -127,7 +137,7 @@ And you'll see the Nginx default homepage:
 ...
 ```
 
-## Step 3 &mdash; Build and Publish a Private Container Image
+## Step 4 &mdash; Build and Publish a Private Container Image
 
 Add a few new files. First, `app/site/index.html`:
 
@@ -167,7 +177,9 @@ And replace the image name `"nginx"` with a reference to the resulting built ima
 ...
 ```
 
-## Step 4 &mdash; Update the Service
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./02-containers-on-ecs/step4.ts).
+
+## Step 5 &mdash; Update the Service
 
 Now, also update the desired container count from `1` to `3`:
 
@@ -176,6 +188,8 @@ Now, also update the desired container count from `1` to `3`:
     desiredCount: 3,
 ...
 ```
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./02-containers-on-ecs/step5.ts).
 
 Next update the stack:
 
@@ -231,7 +245,7 @@ The result will contain the updated HTML:
 </html>
 ```
 
-## Step 5 &mdash; Destroy Everything
+## Step 6 &mdash; Destroy Everything
 
 Finally, destroy the resources and the stack itself:
 
@@ -241,3 +255,13 @@ pulumi stack rm
 ```
 
 ## Next Steps
+
+Congratulations! :tada: You've created an ECS "Fargate" cluster, created a load balanced service within it, and built and deployed a custom Docker container image to your scaled-out service.
+
+Next, choose amongst these labs:
+
+* [Provisioning EC2 Virtual Machines](../02-app-arch/01-provisioning-vms.md)
+* [Deploying Containers to a Kubernetes Cluster](../02-app-arch/03-containers-on-kubernetes.md)
+* [Using AWS Lambda for Serverless Application Patterns](../02-app-arch/04-lambda-serverless.md)
+
+Or view the [suggested next steps](/#next-steps) after completing all labs.

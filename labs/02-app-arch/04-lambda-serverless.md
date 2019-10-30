@@ -21,7 +21,7 @@ import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
 ```
 
-> :white_check_mark: After completing this step, your `index.ts` file should [look like this](./code/step1.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./04-lambda-serverless/step1.ts).
 
 ## Step 2 &mdash; Create a DynamoDB Table
 
@@ -38,7 +38,7 @@ const hits = new aws.dynamodb.Table("hits", {
 
 The schema for this table is quite simple because this instance will only store a single global counter for the entire website.
 
-> :white_check_mark: After completing this step, your `index.ts` file should [look like this](./code/step2.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./04-lambda-serverless/step2.ts).
 
 ## Step 3 &mdash; Create IAM Policies
 
@@ -85,7 +85,7 @@ const handlerPolicy = new aws.iam.RolePolicy("handler-policy", {
 });
 ```
 
-> :white_check_mark: After completing this step, your `index.ts` file should [look like this](./code/step3.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./04-lambda-serverless/step3.ts).
 
 ## Step 4 &mdash; Create a Lambda-Based API Gateway
 
@@ -141,9 +141,9 @@ const site = new awsx.apigateway.API("site", {
 export const url = site.url;
 ```
 
-Notice this definition references the code stored in `handler/index.js` file through the use of an "asset" &mdash; a mechanism for packaging up files and directories for use by your infrastructure. At the end, your API's base URL will be printed out.
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./04-lambda-serverless/step4.ts).
 
-> :white_check_mark: After completing this step, your `index.ts` file should [look like this](./code/step4.ts).
+Notice this definition references the code stored in `handler/index.js` file through the use of an "asset" &mdash; a mechanism for packaging up files and directories for use by your infrastructure. At the end, your API's base URL will be printed out.
 
 ## Step 5 &mdash; Deploy Everything
 
@@ -211,28 +211,35 @@ First, delete the IAM `handlerRole` and `handlerPolicy` definitions altogether.
 Next, replace your API Gateway `site` with the following code:
 
 ```typescript
+...
 const site = new awsx.apigateway.API("site", {
     routes: [{
         path: "/",
         method: "GET",
-        eventHandler: new aws.lambda.Function("get-handler", {
-            runtime: aws.lambda.NodeJS10dXRuntime,
-            code: new pulumi.asset.AssetArchive({
-                ".": new pulumi.asset.FileArchive("handler"),
-            }),
-            handler: "index.handler",
-            role: handlerRole.arn,
-            environment: {
-                variables: {
-                    "HITS_TABLE": hits.name,
-                },
-            },
-        }),
+        eventHandler: async () => {
+            const dc = new AWS.DynamoDB.DocumentClient();
+            const result = await dc.update({
+                TableName: hits.name.get(),
+                Key: { "Site": "ACMECorp" },
+                UpdateExpression: "SET Hits = if_not_exists(Hits, :zero) + :incr",
+                ExpressionAttributeValues: { ":zero": 0, ":incr": 1 },
+                ReturnValues: "UPDATED_NEW",
+            }).promise();
+            return {
+                statusCode: 200,
+                headers: { "Content-Type": "text/html" },
+                body: "<h1>Welcome to ACMECorp!</h1>\n"+
+                    `<p>${result.Attributes!.Hits} hits.</p>\n`,
+            };
+        },
     }],
 });
+...
 ```
 
 Remember to keep the line at the end to export the `url`. It is safe to also delete the `handler/index.js` file altogether now.
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./04-lambda-serverless/step6.ts).
 
 Next, run an update:
 
@@ -309,3 +316,13 @@ pulumi stack rm
 ```
 
 ## Next Steps
+
+Congratulations! :tada: You have successfully created a modern serverless application that uses API Gateway and Lambda for compute &mdash; resulting in dynamic pay-per-use infrastructure &mdash; with DynamoDB NoSQL storage on the backend to track of hit counts.
+
+Next, choose amongst these labs:
+
+* [Provisioning EC2 Virtual Machines](../02-app-arch/01-provisioning-vms.md)
+* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../02-app-arch/02-containers-on-ecs.md)
+* [Deploying Containers to a Kubernetes Cluster](../02-app-arch/03-containers-on-kubernetes.md)
+
+Or view the [suggested next steps](/#next-steps) after completing all labs.

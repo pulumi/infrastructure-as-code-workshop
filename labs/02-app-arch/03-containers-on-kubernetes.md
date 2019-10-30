@@ -35,11 +35,14 @@ From your project's root directory, install the Kubernetes package:
 npm install @pulumi/kubernetes
 ```
 
-Next, add an import to an empty `index.ts` file:
+Next, add these imports to an empty `index.ts` file:
 
 ```typescript
 import * as k8s from "@pulumi/kubernetes";
+import * as pulumi from "@pulumi/pulumi";
 ```
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./02-containers-on-kubernetes/step2.ts).
 
 ## Step 3 &mdash; Declare Your Application's Namespace Object
 
@@ -52,6 +55,8 @@ const ns = new k8s.core.v1.Namespace("app-ns", {
     metadata: { name: "joe-duffy" },
 });
 ```
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./02-containers-on-kubernetes/step3.ts).
 
 ## Step 4 &mdash; Declare Your Application's Deployment Object
 
@@ -80,6 +85,8 @@ const deployment = new k8s.apps.v1.Deployment("app-dep", {
 });
 ```
 
+> :white_check_mark: After this change, your `index.ts` should [look like this](./02-containers-on-kubernetes/step4.ts).
+
 ## Step 5 &mdash; Declare Your Application's Service Object
 
 Next, you'll declare a [service object](https://kubernetes.io/docs/concepts/services-networking/service/), which enables networking and load balancing across your deployment replicas.
@@ -106,6 +113,8 @@ const address = service.status.loadBalancer.ingress[0].hostname;
 const port = service.spec.ports[0].port;
 export const url = pulumi.interpolate`http://${address}:${port}`;
 ```
+
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./02-containers-on-kubernetes/step5.ts).
 
 ## Step 6 &mdash; Deploy Everything
 
@@ -186,6 +195,8 @@ And then update its image to:
                     image: "jocatalin/kubernetes-bootcamp:v2",
 ...
 ```
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./02-containers-on-kubernetes/step7.ts).
 
 Deploy your updates:
 
@@ -304,3 +315,13 @@ pulumi stack rm
 ```
 
 ## Next Steps
+
+Congratulations! :tada: You've deployed a Kubernetes application to an existing EKS cluster, scaled it out, and performed a rolling update of the container image it is running.
+
+Next, choose amongst these labs:
+
+* [Provisioning EC2 Virtual Machines](../02-app-arch/01-provisioning-vms.md)
+* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../02-app-arch/02-containers-on-ecs.md)
+* [Using AWS Lambda for Serverless Application Patterns](../02-app-arch/04-lambda-serverless.md)
+
+Or view the [suggested next steps](/#next-steps) after completing all labs.
