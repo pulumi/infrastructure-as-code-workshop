@@ -21,6 +21,8 @@ Now that the AWS package is installed, add the following line to `index.ts` to i
 import * as aws from "@pulumi/aws";
 ```
 
+> :white_check_mark: After completing this step, your `index.ts` should [look like this](./02-configuring-aws/step2.ts).
+
 ## Step 3 &mdash; Configure an AWS Region
 
 Configure the AWS region you would like to deploy to:

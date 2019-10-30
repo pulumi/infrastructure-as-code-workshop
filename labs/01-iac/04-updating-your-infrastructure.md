@@ -12,7 +12,7 @@ This demonstrates how declarative infrastrucutre as code tools can be used not j
 
 Create a directory `site/` and add a new `index.html` file with the following contents:
 
-```
+```html
 <html>
     <body>
         <h1>Hello Pulumi</h1>
@@ -28,7 +28,7 @@ import * as path from "path";
 ...
 ```
 
-And then add these lines to the end of your `index.ts` file:
+And then add these lines to `index.ts` right after creating the bucket itself:
 
 ```typescript
 ...
@@ -36,6 +36,7 @@ const myObject = new aws.s3.BucketObject("index.html", {
     bucket: myBucket,
     source: path.join("site", "index.html"),
 });
+...
 ```
 
 Deploy the changes:
@@ -76,6 +77,8 @@ Notice that your `index.html` file has been added:
 2019-10-22 16:50:54        68 index.html
 ```
 
+> :white_check_mark: After completing this step, your `index.ts` should [look like this](./03-updating-your-infrastructure/step1.ts).
+
 ## Step 2 &mdash; Serve Content From Your Bucket as a Website
 
 To serve content from your bucket as a website, you'll need to update a few properties.
@@ -113,29 +116,7 @@ export const bucketEndpoint = pulumi.interpolate`http://${myBucket.websiteEndpoi
 ...
 ```
 
-For reference, your full `index.ts` should now look like this:
-
-```typescript
-import * as pulumi from "@pulumi/pulumi";
-import * as aws from "@pulumi/aws";
-import * as path from "path";
-
-const myBucket = new aws.s3.Bucket("my-bucket", {
-    website: {
-        indexDocument: "index.html",
-    },
-});
-
-const myObject = new aws.s3.BucketObject("index.html", {
-    acl: "public-read",
-    bucket: myBucket,
-    contentType: "text/html",
-    source: path.join("site", "index.html"),
-});
-
-export const bucketName = myBucket.bucket;
-export const bucketEndpoint = pulumi.interpolate`http://${myBucket.websiteEndpoint}`;
-```
+> :white_check_mark: At this point, your `index.ts` should [look like this](./03-updating-your-infrastructure/step2.ts).
 
 Now deploy the changes:
 
@@ -217,6 +198,8 @@ Duration: 7s
 
 Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/4
 ```
+
+> :white_check_mark: After completing this step, your `index.ts` should [look like this](./03-updating-your-infrastructure/step2.ts).
 
 ## Step 3 &mdash; Access Your Website
 

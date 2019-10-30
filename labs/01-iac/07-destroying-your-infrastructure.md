@@ -2,7 +2,7 @@
 
 The final step is to destroy all of the resources from the two stacks created.
 
-## Step 1 — Destroy Resources
+## Step 1 &mdash;  Destroy Resources
 
 First, destroy the resources in your current stack:
 
@@ -58,7 +58,7 @@ associated with the stack are still maintained. If you want to remove the stack
 completely, run 'pulumi stack rm prod'.
 ```
 
-## Step 2 — Remove the Stack
+## Step 2 &mdash;  Remove the Stack
 
 The AWS resources for this stack have been destroyed. Per the message printed at the end, however, the stack itself, however, is still known to Pulumi. This means all past history is still available and you can perform subsequent updates on this stack.
 
@@ -77,7 +77,7 @@ Please confirm that this is what you'd like to do by typing ("prod"):
 
 Type the name of the stack and hit enter. The stack is now gone.
 
-## Step 3 — Select Another Stack, Rinse and Repeat
+## Step 3 &mdash;  Select Another Stack, Rinse and Repeat
 
 After destroying `prod`, you still have the `dev` stack. To destroy it too, first select it:
 
@@ -87,7 +87,7 @@ pulumi stack select dev
 
 Now, go back and repeat steps 1 and 2.
 
-## Step 4 — Verify That Stacks are Gone
+## Step 4 &mdash;  Verify That Stacks are Gone
 
 Verify that all of this projec'ts stacks are now gone:
 
@@ -96,3 +96,12 @@ pulumi stack ls
 ```
 
 ## Next Steps
+
+Congratulations! :tada: You have completed the first lab.
+
+Now that you're more familiar with infrastructure as code concepts, and how the tool works, you can feel free to explore the more advanced collection of labs. These labs will teach you how to provision and scale virtual machines, containers (including Kubernetes), and serverless workloads. Feel free to do them sequentially, or choose what's most interesting to you &mdash; this first lab will have given you all of the foundational understanding you need to succeed at any of them.
+
+1. [Provisioning EC2 Virtual Machines](../02-app-arch/01-provisioning-vms.md)
+3. [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../02-app-arch/02-containers-on-ecs.md)
+4. [Deploying Containers to a Kubernetes Cluster](../02-app-arch/03-containers-on-kubernetes.md)
+5. [Using AWS Lambda for Serverless Application Patterns](../02-app-arch/04-lambda-serverless.md)

@@ -2,7 +2,7 @@
 
 Right now, the bucket's contents are hard-coded. Next, you'll make the location of the contents configurable, and add support for populating the bucket with an entire directory's worth of contents.
 
-## Step 1 — Adding a Config Variable
+## Step 1 &mdash; Adding a Config Variable
 
 Instead of hard-coding the `"site"` directory, we will use configuration to make it easy to change the location without editing the program.
 
@@ -15,7 +15,7 @@ const config = new Config();
 export const siteDir = config.require("siteDir");
 ```
 
-## Step 2 — Populating the Bucket Based on Config
+## Step 2 &mdash; Populating the Bucket Based on Config
 
 Add this line to your `index.ts` file's import statements:
 
@@ -42,7 +42,9 @@ To make matters interesting, rename the `site` directory to `www`:
 mv site www
 ```
 
-## Step 3 — Deploying the Changes
+> :white_check_mark: After completing this step, your `index.ts` should [look like this](./05-making-your-stack-configurable/step2.ts).
+
+## Step 3 &mdash; Deploying the Changes
 
 Now, deploy your changes. To do so, first configure your stack. If you don't, you'll get an error:
 
@@ -85,7 +87,7 @@ Duration: 3s
 Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/5
 ```
 
-## Step 4 — Add More Files
+## Step 4 &mdash; Add More Files
 
 Instead of hard-coding the set of files, you will now change the program to read the entire contents of the `www` directory. The `mime` NPM package dynamically detects content types and `node-dir` recursively scans directories. Install these packages:
 
@@ -153,6 +155,8 @@ curl $(pulumi stack output bucketEndpoint)/about.html
 ```
 
 And you will see the contents added above.
+
+> :white_check_mark: After completing this step, your `index.ts` should [look like this](./05-making-your-stack-configurable/step4.ts).
 
 ## Next Steps
 
