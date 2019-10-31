@@ -18,9 +18,9 @@ The first lab takes you on a tour of infrastructure as code concepts:
 2. [Configuring AWS](./labs/01-iac/02-configuring-aws.md)
 3. [Provisioning Infrastructure](./labs/01-iac/03-provisioning-infrastructure.md)
 4. [Updating your Infrastructure](./labs/01-iac/04-updating-your-infrastructure.md)
-5. [Making Your Stack Configurable](./labs/01-iac-05-making-your-stack-configurable.md)
-6. [Creating a Second Stack](./labs/01-iac-06-creating-a-second-stack.md)
-7. [Destroying Your Infrastructure](./labs/01-iac-07-destroying-your-infrastructure.md)
+5. [Making Your Stack Configurable](./labs/01-iac/05-making-your-stack-configurable.md)
+6. [Creating a Second Stack](./labs/01-iac/06-creating-a-second-stack.md)
+7. [Destroying Your Infrastructure](./labs/01-iac/07-destroying-your-infrastructure.md)
 
 ### Lab 2 — Modern Application Architectures
 
