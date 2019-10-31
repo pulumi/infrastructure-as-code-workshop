@@ -13,12 +13,12 @@ const myBucket = new aws.s3.Bucket("my-bucket", {
 
 const files = nodedir.files(siteDir, { sync: true });
 for (const file of files) {
-    const name = file.subscring(siteDir.length+1);
+    const name = file.substring(siteDir.length+1);
     const myObject = new aws.s3.BucketObject(name, {
         acl: "public-read",
         bucket: myBucket,
         contentType: mime.getType(file) || undefined,
-        source: file,     
+        source: file,
     });
 }
 
