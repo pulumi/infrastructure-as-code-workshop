@@ -112,7 +112,7 @@ Now replace the object allocation with this code:
 ...
 const files = nodedir.files(siteDir, { sync: true });
 for (const file of files) {
-    const name = file.subscring(siteDir.length+1);
+    const name = file.substring(siteDir.length+1);
     const myObject = new aws.s3.BucketObject(name, {
         acl: "public-read",
         bucket: myBucket,
