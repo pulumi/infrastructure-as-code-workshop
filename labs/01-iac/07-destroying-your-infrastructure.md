@@ -7,7 +7,7 @@ The final step is to destroy all of the resources from the two stacks created.
 First, destroy the resources in your current stack:
 
 ```bash
-pulumi destroy
+pulumi destroy prod
 ```
 
 This will show you a preview, much like the `pulumi up` command does:
