@@ -34,7 +34,7 @@ And then add these lines to `index.ts` right after creating the bucket itself:
 ...
 const myObject = new aws.s3.BucketObject("index.html", {
     bucket: myBucket,
-    source: path.join("site", "index.html"),
+    source: new pulumi.asset.FileAsset(path.join("site", "index.html")),
 });
 ...
 ```
@@ -103,7 +103,7 @@ const myObject = new aws.s3.BucketObject("index.html", {
     acl: "public-read",
     bucket: myBucket,
     contentType: "text/html",
-    source: path.join("site", "index.html"),
+    source: new pulumi.asset.FileAsset(path.join("site", "index.html")),
 });
 ...
 ```
