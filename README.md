@@ -4,6 +4,8 @@ This workshop teaches you Infrastructure as Code concepts through a series of ha
 
 This workshop uses AWS although most concepts are applicable no matter what cloud provider you are using.
 
+**Slides are available at: [InfrastructureAsCodeWorkshop.pdf](./slides/InfrastructureAsCodeWorkshop.pdf)**
+
 ## Course Outline
 
 Before proceeding, ensure your machine is ready to go:
