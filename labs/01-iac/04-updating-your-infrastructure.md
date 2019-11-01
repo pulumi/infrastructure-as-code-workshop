@@ -202,7 +202,7 @@ Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/4
 ## Step 3 &mdash; Access Your Website
 
 ```bash
-curl $(bucketEndpoint)
+curl $(pulumi stack output bucketEndpoint)
 ```
 
 This will fetch and print our `index.html` file:
