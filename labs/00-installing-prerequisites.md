@@ -73,4 +73,10 @@ The lab uses EKS which uses IAM for authentication. To support authentication, p
 
 ## Next Steps
 
-* [Infrastructure as Code Basics](./01-basics/01-creating-a-new-project.md)
+* [Infrastructure as Code Labs](./01-iac/01-creating-a-new-project.md)
+* Modern Application Architecture Labs
+    * [Provisioning EC2 Virtual Machines](./02-app-arch/01-provisioning-vms.md)
+    * [Deploying Containers to Elastic Container Service (ECS) "Fargate"](./02-app-arch/02-containers-on-ecs.md)
+    * [Deploying Containers to a Kubernetes Cluster](./02-app-arch/03-containers-on-kubernetes.md)
+    * [Using AWS Lambda for Serverless Application Patterns](./02-app-arch/04-lambda-serverless.md)
+*
