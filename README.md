@@ -6,45 +6,32 @@ This workshop uses AWS although most concepts are applicable no matter what clou
 
 **Slides are available at: [InfrastructureAsCodeWorkshop.pdf](./slides/InfrastructureAsCodeWorkshop.pdf)**
 
-## Course Outline
+## Prerequisities
 
 Before proceeding, ensure your machine is ready to go:
 
-* [Installing Prerequisites](./labs/00-installing-prerequisites.md)
+* [Installing Prerequisites](./00-installing-prerequisites.md)
 
-### Lab 1 — Modern Infrastructure as Code
+## Course Outline
 
-The first lab takes you on a tour of infrastructure as code concepts:
+A course can be language and cloud specific. Choose the link to the specific course you feel is applicable and you can get started
 
-1. [Creating a New Project](./labs/01-iac/01-creating-a-new-project.md)
-2. [Configuring AWS](./labs/01-iac/02-configuring-aws.md)
-3. [Provisioning Infrastructure](./labs/01-iac/03-provisioning-infrastructure.md)
-4. [Updating your Infrastructure](./labs/01-iac/04-updating-your-infrastructure.md)
-5. [Making Your Stack Configurable](./labs/01-iac/05-making-your-stack-configurable.md)
-6. [Creating a Second Stack](./labs/01-iac/06-creating-a-second-stack.md)
-7. [Destroying Your Infrastructure](./labs/01-iac/07-destroying-your-infrastructure.md)
-
-### Lab 2 — Modern Application Architectures
-
-The second lab takes you on a tour of cloud architectures, including VMs, containers, and serverless:
-
-1. [Provisioning EC2 Virtual Machines](./labs/02-app-arch/01-provisioning-vms.md)
-3. [Deploying Containers to Elastic Container Service (ECS) "Fargate"](./labs/02-app-arch/02-containers-on-ecs.md)
-4. [Deploying Containers to a Kubernetes Cluster](./labs/02-app-arch/03-containers-on-kubernetes.md)
-5. [Using AWS Lambda for Serverless Application Patterns](./labs/02-app-arch/04-lambda-serverless.md)
+|            | TypeScript            | Python                   | C#                       | 
+| ------     | -------               | -------                  | -------                  |
+| AWS        |   [get started][1]    |   [get started][2]       |   Coming soon            |
+| Azure      |   Coming soon         |   Coming soon            |   Coming soon            |
+| GCP        |   Coming Soon         |   Coming soon            |   Coming soon            |
 
 ## Next Steps
 
 After completing these labs, there are several topics you may want to explore.
 
-* Additional tutorials:
-    - [AWS](https://www.pulumi.com/docs/tutorials/aws/)
-    - [Azure](https://www.pulumi.com/docs/tutorials/azure/)
-    - [GCP](https://www.pulumi.com/docs/tutorials/gcp)
-    - [Kubernetes](https://www.pulumi.com/docs/tutorials/kubernetes)
 * [Continuous delivery](https://www.pulumi.com/docs/guides/continuous-delivery/)
 * [Secrets management](https://www.pulumi.com/blog/managing-secrets-with-pulumi/)
 * [Multi-project infrastructure architectures](https://www.pulumi.com/blog/architect-aws-application-infra-with-pulumi-stack-references/)
 * [Test-driven infrastructure](https://www.pulumi.com/blog/unit-testing-infrastructure-in-nodejs-and-mocha/)
 
-Thank you for checking out the Infrastructure as Code Workshop! More labs are on their way. Please [file an issue](https://github.com/joeduffy/infrastructure-as-code-workshop/issues/new) if there are topics you'd like to see covered in the future.
+Thank you for checking out the Infrastructure as Code Workshop! More labs are on their way. Please [file an issue](https://github.com/pulumi/infrastructure-as-code-workshop/issues/new) if there are topics you'd like to see covered in the future.
+
+[1]: ./aws/typescript/README.md
+[2]: ./aws/python/README.md

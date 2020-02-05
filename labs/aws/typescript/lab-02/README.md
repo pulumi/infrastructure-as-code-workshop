@@ -1,8 +1,10 @@
 # Provisioning EC2 Virtual Machines
 
-In this lab, you'll first create a single EC2 virtual machine (VM). Afterwards, you'll scale that out to a VM per availability zone in your region, and then add a load balancer to spread load across the entire fleet.
+In this lab, you'll first create a single EC2 virtual machine (VM). Afterwards, you'll scale that out to a VM per availability 
+zone in your region, and then add a load balancer to spread load across the entire fleet.
 
-> This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete labs [1](../01-iac/01-creating-a-new-project.md) and [2](../01-iac/02-configuring-aws.md) first.
+> This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete parts [1](../lab-01/01-creating-a-new-project.md) 
+>and [2](../lab-01/02-configuring-aws.md) of lab-01.
 
 ## Step 1 &mdash;  Declare the VM
 
@@ -56,7 +58,7 @@ export const ip = server.publicIp;
 export const hostname = server.publicDns;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/01-provisioning-vms/step1.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step1.ts).
 
 ## Step 2 &mdash; Provision the VM and Access It
 
@@ -102,7 +104,8 @@ Hello, World!
 
 ## Step 3 – Create Multiple Virtual Machines
 
-Now you will create multiple VM instances, each running the same Python webserver, across all AWS availability zones in your region. Replace the part of your code that creates the webserver and exports the resulting IP address and hostname with the following:
+Now you will create multiple VM instances, each running the same Python webserver, across all AWS availability zones in
+your region. Replace the part of your code that creates the webserver and exports the resulting IP address and hostname with the following:
 
 ```typescript
 ...
@@ -124,7 +127,7 @@ for (const az of aws.getAvailabilityZones().names) {
 }
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/01-provisioning-vms/step3.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step3.ts).
 
 Now run a command to update your stack with the new resource definitions:
 
@@ -256,7 +259,7 @@ for (const az of aws.getAvailabilityZones().names) {
 export const url = listener.endpoint.hostname;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/01-provisioning-vms/step4.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step4.ts).
 
 Deploy these updates:
 
@@ -347,12 +350,13 @@ pulumi stack rm
 
 ## Next Steps
 
-Congratulations! :tada: You have stood up an EC2 VM, scaled it out across multiple availability zones, and configured a load balancer to spread traffic across all of your instances.
+Congratulations! :tada: You have stood up an EC2 VM, scaled it out across multiple availability zones, and configured a
+load balancer to spread traffic across all of your instances.
 
 Next, choose amongst these labs:
 
-* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../02-app-arch/02-containers-on-ecs.md)
-* [Deploying Containers to a Kubernetes Cluster](../02-app-arch/03-containers-on-kubernetes.md)
-* [Using AWS Lambda for Serverless Application Patterns](../02-app-arch/04-lambda-serverless.md)
+* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../lab-03/README.md)
+* [Deploying Containers to a Kubernetes Cluster](../lab-04/README.md)
+* [Using AWS Lambda for Serverless Application Patterns](../lab-05/README.md)
 
-Or view the [suggested next steps](/#next-steps) after completing all labs.
+Or view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.

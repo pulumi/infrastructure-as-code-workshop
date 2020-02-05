@@ -13,7 +13,7 @@ const appService = new awsx.ecs.FargateService("app-svc", {
     cluster,
     taskDefinitionArgs: {
         container: {
-            image: "nginx,
+            image: "nginx",
             portMappings: [ web ],
         },
     },
