@@ -14,3 +14,9 @@ The first lab takes you on a tour of infrastructure as code concepts:
 
 In this [lab](./lab-02/README.md), you will learn about the creation of Virtual Machines in EC2. This lab will include
 the use of loops to create loadbalanced infrastructure in EC2.
+
+### Lab 3 - Deploying Containers to Elastic Container Service (ECS)
+
+In this [lab](./lab-03/README.md), you will learn about how to create and deploy container based applications to Elastic
+Container Service (ECS).
+
