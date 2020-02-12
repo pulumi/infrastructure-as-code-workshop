@@ -320,8 +320,8 @@ Congratulations! :tada: You've deployed a Kubernetes application to an existing 
 
 Next, choose amongst these labs:
 
-* [Provisioning EC2 Virtual Machines](../02-app-arch/01-provisioning-vms.md)
-* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../02-app-arch/02-containers-on-ecs.md)
-* [Using AWS Lambda for Serverless Application Patterns](../02-app-arch/04-lambda-serverless.md)
+* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../lab-03/README.md)
+* [Deploying Containers to a Kubernetes Cluster](../lab-04/README.md)
+* [Using AWS Lambda for Serverless Application Patterns](../lab-05/README.md)
 
-Or view the [suggested next steps](/#next-steps) after completing all labs.
+Or view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.

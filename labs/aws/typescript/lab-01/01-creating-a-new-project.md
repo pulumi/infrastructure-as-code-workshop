@@ -42,7 +42,6 @@ Our project is comprised of multiple files:
 * **`index.ts`**: your program's main entrypoint file
 * **`package.json`** and **`package-lock.json`**: your project's NPM dependency information
 * **`Pulumi.yaml`**: your project's metadata, containing its name and language
-* **`Pulumi.dev.yaml`**: your stack's metadata, containing its name and configuration variables
 * **`tsconfig.json`**: your project's TypeScript settings
 * **`node_modules/`**: a directory containing your project's installed NPM dependencies
 

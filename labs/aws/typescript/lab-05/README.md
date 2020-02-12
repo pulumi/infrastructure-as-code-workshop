@@ -2,7 +2,8 @@
 
 In this lab, you will create a serverless web application that uses API Gateway and Lambda, along with a dynamic DynamoDB-based hit counter.
 
-> This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete labs [1](../01-iac/01-creating-a-new-project.md) and [2](../01-iac/02-configuring-aws.md) first.
+> This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete parts [1](../lab-01/01-creating-a-new-project.md) 
+>and [2](../lab-01/02-configuring-aws.md) of lab-01.
 
 ## Step 1 &mdash; Install Dependencies
 
@@ -21,7 +22,7 @@ import * as awsx from "@pulumi/awsx";
 import * as pulumi from "@pulumi/pulumi";
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/04-lambda-serverless/step1.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step1.ts).
 
 ## Step 2 &mdash; Create a DynamoDB Table
 
@@ -38,11 +39,12 @@ const hits = new aws.dynamodb.Table("hits", {
 
 The schema for this table is quite simple because this instance will only store a single global counter for the entire website.
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/04-lambda-serverless/step2.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step2.ts).
 
 ## Step 3 &mdash; Create IAM Policies
 
-Before creating your website, the Lambda will need a certain IAM role and permission. This permits the Lambda's function to assume the right identity at runtime, log into CloudWatch to aid with debugging, and to use the DynamoDB table defined above:
+Before creating your website, the Lambda will need a certain IAM role and permission. This permits the Lambda's function
+to assume the right identity at runtime, log into CloudWatch to aid with debugging, and to use the DynamoDB table defined above:
 
 ```typescript
 ...
@@ -85,13 +87,14 @@ const handlerPolicy = new aws.iam.RolePolicy("handler-policy", {
 });
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/04-lambda-serverless/step3.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step3.ts).
 
 ## Step 4 &mdash; Create a Lambda-Based API Gateway
 
 Now create an API Gateway powered by Lambda for its sole REST API handler for `GET` requests at the `/` route.
 
-The first step is to create the code for the Lambda itself &mdash; this is the code that will run in response to an API call at runtime. Place this code into a new `handler/index.js` file:
+The first step is to create the code for the Lambda itself &mdash; this is the code that will run in response to an API
+call at runtime. Place this code into a new `handler/index.js` file:
 
 ```javascript
 const AWS = require("aws-sdk");
@@ -141,9 +144,10 @@ const site = new awsx.apigateway.API("site", {
 export const url = site.url;
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/04-lambda-serverless/step4.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/step4.ts).
 
-Notice this definition references the code stored in `handler/index.js` file through the use of an "asset" &mdash; a mechanism for packaging up files and directories for use by your infrastructure. At the end, your API's base URL will be printed out.
+Notice this definition references the code stored in `handler/index.js` file through the use of an "asset" &mdash; a mechanism
+for packaging up files and directories for use by your infrastructure. At the end, your API's base URL will be printed out.
 
 ## Step 5 &mdash; Deploy Everything
 
@@ -204,7 +208,9 @@ Notice that the counter increases:
 
 ## Step 6 &mdash; Replace the App with Inline Code
 
-It's possible to simplify this serverless application by moving the runtime code into the infrastructure definition. This isn't always the right way to design your infrastructure as code, but for "fully serverless" applications like this one, where the boundary between application and infrastructure is intentionally blurred, this can be a great way to go.
+It's possible to simplify this serverless application by moving the runtime code into the infrastructure definition. This
+isn't always the right way to design your infrastructure as code, but for "fully serverless" applications like this one,
+where the boundary between application and infrastructure is intentionally blurred, this can be a great way to go.
 
 First, delete the IAM `handlerRole` and `handlerPolicy` definitions altogether.
 
@@ -239,7 +245,7 @@ const site = new awsx.apigateway.API("site", {
 
 Remember to keep the line at the end to export the `url`. It is safe to also delete the `handler/index.js` file altogether now.
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/04-lambda-serverless/step6.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step6.ts).
 
 Next, run an update:
 
@@ -317,12 +323,13 @@ pulumi stack rm
 
 ## Next Steps
 
-Congratulations! :tada: You have successfully created a modern serverless application that uses API Gateway and Lambda for compute &mdash; resulting in dynamic pay-per-use infrastructure &mdash; with DynamoDB NoSQL storage on the backend to track of hit counts.
+Congratulations! :tada: You have successfully created a modern serverless application that uses API Gateway and Lambda
+for compute &mdash; resulting in dynamic pay-per-use infrastructure &mdash; with DynamoDB NoSQL storage on the backend to track of hit counts.
 
 Next, choose amongst these labs:
 
-* [Provisioning EC2 Virtual Machines](../02-app-arch/01-provisioning-vms.md)
-* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../02-app-arch/02-containers-on-ecs.md)
-* [Deploying Containers to a Kubernetes Cluster](../02-app-arch/03-containers-on-kubernetes.md)
+* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../lab-03/README.md)
+* [Deploying Containers to a Kubernetes Cluster](../lab-04/README.md)
+* [Using AWS Lambda for Serverless Application Patterns](../lab-05/README.md)
 
-Or view the [suggested next steps](/#next-steps) after completing all labs.
+Or view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.

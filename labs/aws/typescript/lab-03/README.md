@@ -2,7 +2,8 @@
 
 In this lab, you will deploy a containerized application to an AWS ECS cluster.
 
-> This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete labs [1](../01-iac/01-creating-a-new-project.md) and [2](../01-iac/02-configuring-aws.md) first.
+> This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete parts [1](../lab-01/01-creating-a-new-project.md) 
+> and [2](../lab-01/02-configuring-aws.md) of lab-01.
 
 ## Step 1 &mdash; Create an ECS Cluster
 
@@ -26,7 +27,7 @@ And now create a new ECS cluster. You will use the default values, so doing so i
 const cluster = new awsx.ecs.Cluster("cluster");
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/02-containers-on-ecs/step1.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/step1.ts).
 
 ## Step 2 &mdash; Create a Load-Balanced Container Service
 
@@ -59,7 +60,7 @@ const appService = new awsx.ecs.FargateService("app-svc", {
 export const url = pulumi.interpolate`${web.endpoint.hostname}`;
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/02-containers-on-ecs/step2.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/step2.ts).
 
 ## Step 3 &mdash; Provision the Cluster and Service
 
@@ -177,7 +178,7 @@ And replace the image name `"nginx"` with a reference to the resulting built ima
 ...
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/02-containers-on-ecs/step4.ts).
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/step4.ts).
 
 ## Step 5 &mdash; Update the Service
 
@@ -189,7 +190,7 @@ Now, also update the desired container count from `1` to `3`:
 ...
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/02-containers-on-ecs/step5.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step5.ts).
 
 Next update the stack:
 
@@ -260,8 +261,8 @@ Congratulations! :tada: You've created an ECS "Fargate" cluster, created a load 
 
 Next, choose amongst these labs:
 
-* [Provisioning EC2 Virtual Machines](../02-app-arch/01-provisioning-vms.md)
-* [Deploying Containers to a Kubernetes Cluster](../02-app-arch/03-containers-on-kubernetes.md)
-* [Using AWS Lambda for Serverless Application Patterns](../02-app-arch/04-lambda-serverless.md)
+* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../lab-03/README.md)
+* [Deploying Containers to a Kubernetes Cluster](../lab-04/README.md)
+* [Using AWS Lambda for Serverless Application Patterns](../lab-05/README.md)
 
-Or view the [suggested next steps](/#next-steps) after completing all labs.
+Or view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.
