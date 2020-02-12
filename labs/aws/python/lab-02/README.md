@@ -31,7 +31,7 @@ group = aws.ec2.SecurityGroup(
     "web-secgrp",
     description='Enable HTTP access',
     ingress=[
-        { 'protocol': 'icmp', 'from_port': 0, 'to_port': 0, 'cidr_blocks': ['0.0.0.0/0'] },
+        { 'protocol': 'icmp', 'from_port': 8, 'to_port': 0, 'cidr_blocks': ['0.0.0.0/0'] },
         { 'protocol': 'tcp', 'from_port': 80, 'to_port': 80, 'cidr_blocks': ['0.0.0.0/0'] }
 ])
 ```
@@ -64,7 +64,7 @@ export('ip', server.public_ip)
 export('hostname', server.public_dns)
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step1.ts).
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step1.py).
 
 ## Step 2 &mdash; Provision the VM and Access It
 
@@ -135,7 +135,7 @@ nohup python -m SimpleHTTPServer 80 &
     hostnames.append(server.public_dns)
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step3.ts).
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step3.py).
 
 Now run a command to update your stack with the new resource definitions:
 
@@ -290,7 +290,7 @@ export('hostnames', hostnames)
 export("url", lb.dns_name)
 ```
 
-> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step4.ts).
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step4.py).
 
 Deploy these updates:
 

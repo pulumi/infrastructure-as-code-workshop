@@ -18,7 +18,7 @@ A course can be language and cloud specific. Choose the link to the specific cou
 
 |            | TypeScript            | Python                   | C#                       | 
 | ------     | -------               | -------                  | -------                  |
-| AWS        |   [get started][1]    |   [get started][2]       |   Coming soon            |
+| AWS        |   [Get started][1]    |   [Get started][2]       |   Coming soon            |
 | Azure      |   Coming soon         |   Coming soon            |   Coming soon            |
 | GCP        |   Coming Soon         |   Coming soon            |   Coming soon            |
 
@@ -33,5 +33,5 @@ After completing these labs, there are several topics you may want to explore.
 
 Thank you for checking out the Infrastructure as Code Workshop! More labs are on their way. Please [file an issue](https://github.com/pulumi/infrastructure-as-code-workshop/issues/new) if there are topics you'd like to see covered in the future.
 
-[1]: ./aws/typescript/README.md
-[2]: ./aws/python/README.md
+[1]: ./labs/aws/typescript/README.md
+[2]: ./labs/aws/python/README.md

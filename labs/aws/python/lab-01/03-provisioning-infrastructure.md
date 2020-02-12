@@ -11,7 +11,7 @@ Add the following to your `__main__.py` file:
 bucket = aws.s3.Bucket("my-bucket")
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step1.ts).
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/03-provisioning-infrastructure/step1.py).
 
 ## Step 2 &mdash; Preview Your Changes
 
@@ -84,14 +84,14 @@ Now our S3 bucket has been created in our AWS account. Feel free to click the Pe
 
 To inspect your new bucket, you will need its physical AWS name. Pulumi records a logical name, `my-bucket`, however the resulting AWS name will be different.
 
-Programs can export variables which will be shown in the CLI and recorded for each deployment. Export your bucket's name by adding this line to `index.ts`:
+Programs can export variables which will be shown in the CLI and recorded for each deployment. Export your bucket's name by adding this line to `__main__.py`:
 
 ```python
 ...
 pulumi.export('bucket_name', bucket.bucket)
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step4.ts).
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/03-provisioning-infrastructure/step4.py).
 
 Now deploy the changes:
 

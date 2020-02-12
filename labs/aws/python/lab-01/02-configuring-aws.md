@@ -14,12 +14,12 @@ pip3 install pulumi-aws
 
 Now that the AWS package is installed, add the following line to `__main__.py` to import it:
 
-```typescript
+```python
 ...
 import pulumi_aws as aws
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/02-configuring-aws/step2.ts).
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/02-configuring-aws/step2.py).
 
 ## Step 3 &mdash; Configure an AWS Region
 

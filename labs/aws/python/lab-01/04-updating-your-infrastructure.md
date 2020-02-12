@@ -30,7 +30,7 @@ import os
 
 And then add these lines to `__main__.py` right after creating the bucket itself:
 
-```typescript
+```python
 ...
 filepath = os.path.join("site", "index.html")
 obj = aws.s3.BucketObject("index.html",
@@ -40,7 +40,7 @@ obj = aws.s3.BucketObject("index.html",
 ...
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/04-updating-your-infrastructure/step1.ts).
+> :white_check_mark: After these changes, your `__main__.py` should [look like this](./code/04-updating-your-infrastructure/step1.py).
 
 Deploy the changes:
 
@@ -118,7 +118,7 @@ pulumi.export('bucket_endpoint', f'http://{bucket.website_endpoint}')
 ...
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/04-updating-your-infrastructure/step2.ts).
+> :white_check_mark: After these changes, your `__main__.py` should [look like this](./code/04-updating-your-infrastructure/step2.py).
 
 Now deploy the changes:
 

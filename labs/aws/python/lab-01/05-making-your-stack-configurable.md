@@ -18,7 +18,7 @@ site_dir = config.require("siteDir")
 
 And replace the hard-coded `"site"` parameter with this imported `siteDir` variable:
 
-```typescript
+```python
 filepath = os.path.join(site_dir, "index.html")
 mine_type = mimetypes.guess_type(filepath)
 
@@ -30,7 +30,7 @@ obj = aws.s3.BucketObject("index.html",
 )
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/05-making-your-stack-configurable/step2.ts).
+> :white_check_mark: After these changes, your `__main__.py` should [look like this](./code/05-making-your-stack-configurable/step2.py).
 
 To make matters interesting, rename the `site` directory to `www`:
 
@@ -91,7 +91,7 @@ Add a new file, `about.html`, to the `www` directory:
 </html>
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/05-making-your-stack-configurable/step4.ts).
+> :white_check_mark: After these changes, your `__main__.py` should [look like this](./code/05-making-your-stack-configurable/step4.py).
 
 Perform a deployment:
 
