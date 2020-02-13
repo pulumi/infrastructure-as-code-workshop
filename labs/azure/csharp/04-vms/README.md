@@ -113,7 +113,7 @@ Pulumi's Azure provider comes with a number of methods that you can invoke. In y
 
 We will use the concept of **outputs** with `Apply` and `Tuple` methods. An output is a value which gets resolved after a resource is created. `Apply` allows to run artitrary code whenever this resolution occurs. `Tuple` enables combining multiple outputs and using their values when all of them are known.
 
-> You can learn more about outputs and related programming concepts [here](TODO).
+> You can learn more about outputs and related programming concepts [here](https://www.pulumi.com/docs/intro/concepts/programming-model/#outputs).
 
 Declare an output property for your stack:
 

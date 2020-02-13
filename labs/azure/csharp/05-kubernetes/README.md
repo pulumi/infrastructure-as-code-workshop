@@ -2,7 +2,7 @@
 
 In this lab, you will deploy a containerized application to a Kubernetes cluster.
 
-> This lab assumes you have a project set up. If you don't yet, please [complete this lab first](../01-iac/01-creating-a-new-project.md).
+> This lab assumes you have a project set up. If you don't yet, please [complete this step of Lab 1 first](../01-iac/01-creating-a-new-project.md).
 
 > :white_check_mark: Your initial `MyStack.cs` should [look like this](../01-iac/code/01-creating-a-new-project/step3.cs).
 
@@ -12,7 +12,7 @@ Cloud providers like AWS, Azure, Google Cloud offer managed Kubernetes cluster h
 
 If you are participating in an interactive workshop, you will most likely be given access to an existing Kubernetes cluster. Save the `kubeconfig` file you were given to `~/iac-workshop/kubeconfig`.
 
-> If you do not have a cluster, you can create an Amazon EKS one by following the steps [here](https://github.com/pulumi/examples/tree/master/aws-ts-eks) or an Azure AKS one by following the steps [here](TODO).
+> If you do not have a cluster, you can create an Amazon EKS one by following the steps [here](https://github.com/pulumi/examples/tree/master/aws-ts-eks) or an Azure AKS one by following the steps [here](https://github.com/pulumi/examples/tree/master/azure-cs-aks).
 
 Point the `KUBECONFIG` environment variable at your cluster configuration file:
 
@@ -34,14 +34,13 @@ monitoring-influxdb is running at https://abcxyz123.gr7.eu-central-1.eks.amazona
 From your project's root directory, install the Kubernetes package:
 
 ```
-dotnet add package Pulumi.Kubernetes --version TODO-preview
+dotnet add package Pulumi.Kubernetes --version 1.5.3-preview
 ```
 
-Next, add these imports to your `MyStack.cs` file:
+Next, add these using statement to your `MyStack.cs` file:
 
 ```csharp
-import * as k8s from "@pulumi/kubernetes";
-import * as pulumi from "@pulumi/pulumi";
+using K8s = Pulumi.Kubernetes;
 ```
 
 > :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-containers-on-kubernetes/step2.ts).
