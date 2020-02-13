@@ -200,8 +200,8 @@ Congratulations! :tada: You have stood up an Azure VM and configured all the rel
 
 Next, choose amongst these labs:
 
-1. [Deploying Containers to Azure Container Instances](../03-aci/README.md)
-2. [Deploying Serverless Applications with Azure Functions](../04-serverless/README.md)
-3. [Deploying Containers to a Kubernetes Cluster](../05-kubernetes/README.md)
+* [Deploying Serverless Applications with Azure Functions](../02-serverless/README.md)
+* [Deploying Containers to Azure Container Instances](../03-aci/README.md)
+* [Deploying Containers to a Kubernetes Cluster](../05-kubernetes/README.md)
 
 Or view the [suggested next steps](/#next-steps) after completing all labs.

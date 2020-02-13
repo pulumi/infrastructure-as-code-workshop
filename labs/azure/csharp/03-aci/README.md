@@ -2,7 +2,7 @@
 
 In this lab, you will deploy a containerized application to an Azure Container Instances.
 
-> This lab assumes you have a project set up and configured to use Azure. If you don't yet, please complete labs [1](../01-iac/01-creating-a-new-project.md), [2](../01-iac/02-configuring-azure.md) and [3](../01-iac/03-provisioning-infrastructure.md) first.
+> This lab assumes you have a project set up and configured to use Azure. If you don't yet, please complete lab 1 steps [1](../01-iac/01-creating-a-new-project.md), [2](../01-iac/02-configuring-azure.md) and [3](../01-iac/03-provisioning-infrastructure.md) first.
 
 Start with a stack which defines a single resource: a Resource Group.
 
@@ -50,7 +50,7 @@ var group = new Group("aci", new GroupArgs
 
 You need to change the value of the `DnsNameLabel` to some globally unique string.
 
-Now, declare a stack output called endpoint and set it to the `Fqdn` (fully-qualified domain name) property of the container group.
+Now, declare a stack output called `Endpoint` and set it to the `Fqdn` (fully-qualified domain name) property of the container group.
 
 ```csharp
 ...
@@ -276,8 +276,8 @@ Congratulations! :tada: You've created an Azure Container Instance, built and de
 
 Next, choose amongst these labs:
 
-* [Provisioning Virtual Machines](../02-vms/README.md)
-* [Deploying Serverless Applications with Azure Functions](../04-serverless/README.md)
+* [Deploying Serverless Applications with Azure Functions](../02-serverless/README.md)
+* [Provisioning Virtual Machines](../04-vms/README.md)
 * [Deploying Containers to a Kubernetes Cluster](../05-kubernetes/README.md)
 
 Or view the [suggested next steps](/#next-steps) after completing all labs.

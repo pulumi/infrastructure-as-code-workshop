@@ -322,8 +322,8 @@ Congratulations! :tada: You've deployed a Kubernetes application to an existing 
 
 Next, choose amongst these labs:
 
-* [Provisioning Virtual Machines](../02-vms/README.md)
+* [Deploying Serverless Applications with Azure Functions](../02-serverless/README.md)
 * [Deploying Containers to Azure Container Instances](../03-aci/README.md)
-* [Deploying Serverless Applications with Azure Functions](../04-serverless/README.md)
+* [Provisioning Virtual Machines](../04-vms/README.md)
 
 Or view the [suggested next steps](/#next-steps) after completing all labs.
