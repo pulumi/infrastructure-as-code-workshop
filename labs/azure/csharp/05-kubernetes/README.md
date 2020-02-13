@@ -4,7 +4,7 @@ In this lab, you will deploy a containerized application to a Kubernetes cluster
 
 > This lab assumes you have a project set up. If you don't yet, please [complete this lab first](../01-iac/01-creating-a-new-project.md).
 
-> :white_check_mark: Your initial `MyStack.cs` should [look like this](./code/01-creating-a-new-project/step3.cs).
+> :white_check_mark: Your initial `MyStack.cs` should [look like this](../01-iac/code/01-creating-a-new-project/step3.cs).
 
 ## Step 1 &mdash; Configure Access to a Cluster
 
@@ -322,8 +322,8 @@ Congratulations! :tada: You've deployed a Kubernetes application to an existing 
 
 Next, choose amongst these labs:
 
-* [Provisioning EC2 Virtual Machines](../02-app-arch/01-provisioning-vms.md)
-* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../02-app-arch/02-containers-on-ecs.md)
-* [Using AWS Lambda for Serverless Application Patterns](../02-app-arch/04-lambda-serverless.md)
+* [Provisioning Virtual Machines](../02-vms/README.md)
+* [Deploying Containers to Azure Container Instances](../03-aci/README.md)
+* [Deploying Serverless Applications with Azure Functions](../04-serverless/README.md)
 
 Or view the [suggested next steps](/#next-steps) after completing all labs.

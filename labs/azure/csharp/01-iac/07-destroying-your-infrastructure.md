@@ -101,7 +101,7 @@ Congratulations! :tada: You have completed the first lab.
 
 Now that you're more familiar with infrastructure as code concepts, and how the tool works, you can feel free to explore the more advanced collection of labs. These labs will teach you how to provision and scale virtual machines, containers (including Kubernetes), and serverless workloads. Feel free to do them sequentially, or choose what's most interesting to you &mdash; this first lab will have given you all of the foundational understanding you need to succeed at any of them.
 
-1. [Provisioning Virtual Machines](../02-app-arch/01-provisioning-vms.md)
-2. [Deploying Containers to Azure Container Instances](../02-app-arch/02-container-instances.md)
-3. [Deploying Serverless Applications with Azure Functions](../02-app-arch/03-functions-serverless.md)
-4. [Deploying Containers to a Kubernetes Cluster](../02-app-arch/04-containers-on-kubernetes.md)
+1. [Provisioning Virtual Machines](../02-vms/README.md)
+2. [Deploying Containers to Azure Container Instances](../03-aci/README.md)
+3. [Deploying Serverless Applications with Azure Functions](../04-serverless/README.md)
+4. [Deploying Containers to a Kubernetes Cluster](../05-kubernetes/README.md)

@@ -6,7 +6,7 @@ In this lab, you'll create a single Azure Virtual Machine (VM)that serves HTTP o
 
 Start with a stack which defines a single resource: a Resource Group.
 
-> :white_check_mark: Your initial `MyStack.cs` should [look like this](./code/03-provisioning-infrastructure/step1.cs).
+> :white_check_mark: Your initial `MyStack.cs` should [look like this](../01-iac/code/03-provisioning-infrastructure/step1.cs).
 
 ## Step 1 &mdash; Declare the VM
 
@@ -103,7 +103,7 @@ nohup python -m SimpleHTTPServer 80 &",
 
 > For most real-world applications, you would want to create a dedicated image for your application, rather than embedding the script in your code like this.
 
-> :white_check_mark: After this change, your `MyStack.cs` should [look like this](./code/01-provisioning-vms/step1.cs).
+> :white_check_mark: After this change, your `MyStack.cs` should [look like this](./code/step1.cs).
 
 ## Step 2 &mdash; Retrieve the Public IP Address
 
@@ -139,7 +139,7 @@ this.PublicIP = Output
 
 Study the way `Tuple` and `Apply` functions are used.
 
-> :white_check_mark: After this change, your `MyStack.cs` should [look like this](./code/01-provisioning-vms/step2.cs).
+> :white_check_mark: After this change, your `MyStack.cs` should [look like this](./code/step2.cs).
 
 ## Step 3 &mdash; Provision the VM and Access It
 
@@ -200,8 +200,8 @@ Congratulations! :tada: You have stood up an Azure VM and configured all the rel
 
 Next, choose amongst these labs:
 
-1. [Deploying Containers to Azure Container Instances](../02-app-arch/02-container-instances.md)
-2. [Deploying Serverless Applications with Azure Functions](../02-app-arch/03-functions-serverless.md)
-3. [Deploying Containers to a Kubernetes Cluster](../02-app-arch/04-containers-on-kubernetes.md)
+1. [Deploying Containers to Azure Container Instances](../03-aci/README.md)
+2. [Deploying Serverless Applications with Azure Functions](../04-serverless/README.md)
+3. [Deploying Containers to a Kubernetes Cluster](../05-kubernetes/README.md)
 
 Or view the [suggested next steps](/#next-steps) after completing all labs.

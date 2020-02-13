@@ -1,3 +1,7 @@
+### Prerequisites
+
+Please follow [this guide](./00-installing-prerequisites.md) to install all the binaries needed to complete the labs.
+
 ### Lab 1 — Modern Infrastructure as Code
 
 The first lab takes you on a tour of infrastructure as code concepts:
@@ -9,7 +13,6 @@ The first lab takes you on a tour of infrastructure as code concepts:
 5. [Making Your Stack Configurable](./01-iac/05-making-your-stack-configurable.md)
 6. [Creating a Second Stack](./01-iac/06-creating-a-second-stack.md)
 7. [Destroying Your Infrastructure](./01-iac/07-destroying-your-infrastructure.md)
-
 
 ### Lab 2 - Provision Virtual Machines
 

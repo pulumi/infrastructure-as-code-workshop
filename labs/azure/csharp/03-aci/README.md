@@ -6,7 +6,7 @@ In this lab, you will deploy a containerized application to an Azure Container I
 
 Start with a stack which defines a single resource: a Resource Group.
 
-> :white_check_mark: Your initial `MyStack.cs` should [look like this](./code/03-provisioning-infrastructure/step1.cs).
+> :white_check_mark: Your initial `MyStack.cs` should [look like this](../01-iac/code/03-provisioning-infrastructure/step1.cs).
 
 ## Step 1 &mdash; Define a Container Group
 
@@ -61,7 +61,7 @@ Now, declare a stack output called endpoint and set it to the `Fqdn` (fully-qual
 public Output<string> Endpoint { get; set; }
 ```
 
-> :white_check_mark: After these changes, your `MyStack.cs` should [look like this](./code/02-container-instances/step2.cs).
+> :white_check_mark: After these changes, your `MyStack.cs` should [look like this](./code/step2.cs).
 
 ## Step 3 &mdash; Provision the Container Group
 
@@ -205,7 +205,7 @@ Note `DeleteBeforeReplace` on the last line. As we changed the image name, Pulum
 
 Alternatively, you could adjust the `DnsNameLabel` property value.
 
-> :white_check_mark: After these changes, your `MyStack.cs` should [look like this](./code/02-container-instances/step4.cs).
+> :white_check_mark: After these changes, your `MyStack.cs` should [look like this](./code/step4.cs).
 
 ## Step 5 &mdash; Deploy the Changes
 
@@ -276,8 +276,8 @@ Congratulations! :tada: You've created an Azure Container Instance, built and de
 
 Next, choose amongst these labs:
 
-1. [Provisioning Virtual Machines](../02-app-arch/01-provisioning-vms.md)
-2. [Deploying Serverless Applications with Azure Functions](../02-app-arch/03-functions-serverless.md)
-3. [Deploying Containers to a Kubernetes Cluster](../02-app-arch/04-containers-on-kubernetes.md)
+* [Provisioning Virtual Machines](../02-vms/README.md)
+* [Deploying Serverless Applications with Azure Functions](../04-serverless/README.md)
+* [Deploying Containers to a Kubernetes Cluster](../05-kubernetes/README.md)
 
 Or view the [suggested next steps](/#next-steps) after completing all labs.
