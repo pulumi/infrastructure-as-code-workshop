@@ -20,13 +20,12 @@ Point the `KUBECONFIG` environment variable at your cluster configuration file:
 export KUBECONFIG=~/iac-workshop/kubeconfig
 ```
 
-To test out connectivity, run `kubectl cluster-info`. You should see information similar to this (example for Amazon EKS):
+To test out connectivity, run `kubectl cluster-info`. You should see information similar to this (example for Azure AKS):
 
 ```
-Kubernetes master is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com
-Heapster is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/heapster/proxy
-CoreDNS is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
-monitoring-influxdb is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/monitoring-influxdb/proxy
+Kubernetes master is running at https://blaaks-3bebaff2.hcp.westeurope.azmk8s.io:443
+CoreDNS is running at https://blaaks-3bebaff2.hcp.westeurope.azmk8s.io:443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Metrics-server is running at https://blaaks-3bebaff2.hcp.westeurope.azmk8s.io:443/api/v1/namespaces/kube-system/services/https:metrics-server:/proxy
 ```
 
 ## Step 2 &mdash; Install the Kubernetes Package
@@ -43,79 +42,104 @@ Next, add these using statement to your `MyStack.cs` file:
 using K8s = Pulumi.Kubernetes;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-containers-on-kubernetes/step2.ts).
+> :white_check_mark: After this change, your `MyStack.cs` should [look like this](./code/step2.cs).
 
 ## Step 3 &mdash; Declare Your Application's Namespace Object
 
 First, declare a [namespace object](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/). This will scope your objects to a name of your choosing, so that in this workshop you won't accidentally interfere with other participants.
 
-Append this to your `index.ts` file, replacing `joe-duffy` with your own name:
+Append this to your `MyStack` constructor, replacing `my-name` with your own name:
 
-```typescript
-const ns = new k8s.core.v1.Namespace("app-ns", {
-    metadata: { name: "joe-duffy" },
+```csharp
+var ns = new K8s.Core.V1.Namespace("app-ns", new K8s.Types.Inputs.Core.V1.NamespaceArgs
+{
+    Metadata = new K8s.Types.Inputs.Meta.V1.ObjectMetaArgs { Name = "my-name" }
 });
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-containers-on-kubernetes/step3.ts).
+> :white_check_mark: After this change, your `MyStack.cs` should [look like this](./code/step3.cs).
 
 ## Step 4 &mdash; Declare Your Application's Deployment Object
 
 You'll now declare a [deployment object](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), which deploys a specific set of containers to the cluster and scales them. In this case, you'll deploy the pre-built `gcr.io/google-samples/kubernetes-bootcamp:v1` container image with only a single replica.
 
-Append this to your `index.ts` file:
+Append this to your `MyStack` constructor:
 
-```typescript
+```csharp
 ...
-const appLabels = { app: "iac-workshop" };
-const deployment = new k8s.apps.v1.Deployment("app-dep", {
-    metadata: { namespace: ns.metadata.name },
-    spec: {
-        selector: { matchLabels: appLabels },
-        replicas: 1,
-        template: {
-            metadata: { labels: appLabels },
-            spec: {
-                containers: [{
-                    name: "iac-workshop",
-                    image: "gcr.io/google-samples/kubernetes-bootcamp:v1",
-                }],
-            },
-        },
-    },
+var deployment = new K8s.Apps.V1.Deployment("app-dep", new K8s.Types.Inputs.Apps.V1.DeploymentArgs
+{
+    Metadata = new K8s.Types.Inputs.Meta.V1.ObjectMetaArgs { Namespace = ns.Metadata.Apply(m => m.Name) },
+    Spec = new K8s.Types.Inputs.Apps.V1.DeploymentSpecArgs
+    {
+        Selector = new K8s.Types.Inputs.Meta.V1.LabelSelectorArgs { MatchLabels = appLabels },
+        Replicas = 1,
+        Template = new K8s.Types.Inputs.Core.V1.PodTemplateSpecArgs
+        {
+            Metadata = new K8s.Types.Inputs.Meta.V1.ObjectMetaArgs { Labels = appLabels },
+            Spec = new K8s.Types.Inputs.Core.V1.PodSpecArgs
+            {
+                Containers =
+                {
+                    new K8s.Types.Inputs.Core.V1.ContainerArgs
+                    {
+                        Name = "iac-workshop",
+                        Image = "gcr.io/google-samples/kubernetes-bootcamp:v1"
+                    }
+                }
+            }
+        }
+    }
 });
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-containers-on-kubernetes/step4.ts).
+> :white_check_mark: After this change, your `MyStack.cs` should [look like this](./code/step4.cs).
 
 ## Step 5 &mdash; Declare Your Application's Service Object
 
 Next, you'll declare a [service object](https://kubernetes.io/docs/concepts/services-networking/service/), which enables networking and load balancing across your deployment replicas.
 
-Append this to your `index.ts` file:
+Append this to your `MyStack` constructor:
 
-```typescript
+```csharp
 ...
-const service = new k8s.core.v1.Service("app-svc", {
-    metadata: { namespace: ns.metadata.name },
-    spec: {
-        selector: appLabels,
-        ports: [{ port: 80, targetPort: 8080 }],
-        type: "LoadBalancer",
-    },
+var service = new K8s.Core.V1.Service("app-svc", new K8s.Types.Inputs.Core.V1.ServiceArgs
+{
+    Metadata = new K8s.Types.Inputs.Meta.V1.ObjectMetaArgs { Namespace = ns.Metadata.Apply(m => m.Name) },
+    Spec = new K8s.Types.Inputs.Core.V1.ServiceSpecArgs
+    {
+        Selector = appLabels,
+        Ports = { new K8s.Types.Inputs.Core.V1.ServicePortArgs { Port = 80, TargetPort = 8080 }},
+        Type = "LoadBalancer"
+    }
 });
 ```
 
-Afterwards, add these lines to export the resulting, dynamically assigned endpoint for the resulting load balancer:
+Afterwards, add these lines to export the resulting, dynamically assigned endpoint for the load balancer:
 
-```typescript
+```csharp
 ...
-const address = service.status.loadBalancer.ingress[0].hostname;
-const port = service.spec.ports[0].port;
-export const url = pulumi.interpolate`http://${address}:${port}`;
+var address = service.Status
+    .Apply(s => s.LoadBalancer)
+    .Apply(lb => lb.Ingress)
+    .GetAt(0)
+    .Apply(i => i.Hostname);
+var port = service.Spec
+    .Apply(s => s.Ports)
+    .GetAt(0)
+    .Apply(p => p.Port);
+
+this.Url = Output.Format($"http://{address}:{port}");
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/03-containers-on-kubernetes/step5.ts).
+Where `Url` is a property of `MyStack`:
+
+```csharp
+[Output]
+public Output<string> Url { get; set; }
+```
+
+> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/step5.cs).
 
 ## Step 6 &mdash; Deploy Everything
 
@@ -135,20 +159,20 @@ Updating (dev):
  +   └─ kubernetes:apps:Deployment  app-dep           created
 
 Outputs:
-    url: "http://a413f76f2f82011e9962d024411cd1af-1680698210.eu-central-1.elb.amazonaws.com:80"
+    Url: "http://a413f76f2f82011e9962d024411cd1af-1680698210.eu-central-1.elb.amazonaws.com:80"
 
 Resources:
     + 4 created
 
 Duration: 22s
 
-Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/1
+Permalink: https://app.pulumi.com/myuser/iac-workshop/dev/updates/1
 ```
 
-List the pods in your namespace, again replacing `joe-duffy` with the namespace you chose earlier:
+List the pods in your namespace, again replacing `my-name` with the namespace you chose earlier:
 
 ```bash
-kubectl get pods --namespace joe-duffy
+kubectl get pods --namespace my-name
 ```
 
 And you should see a single replica:
@@ -185,7 +209,7 @@ First update your deployment's configuration's replica count:
 
 ```
 ...
-        replicas: 3,
+        Replicas = 3,
 ...
 ```
 
@@ -193,11 +217,11 @@ And then update its image to:
 
 ```
 ...
-                    image: "jocatalin/kubernetes-bootcamp:v2",
+                    Image = "jocatalin/kubernetes-bootcamp:v2"
 ...
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-containers-on-kubernetes/step7.ts).
+> :white_check_mark: After this change, your `MyStack.cs` should [look like this](./code/step7.cs).
 
 Deploy your updates:
 
