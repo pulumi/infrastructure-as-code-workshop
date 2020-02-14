@@ -16,11 +16,11 @@ Before proceeding, ensure your machine is ready to go:
 
 A course can be language and cloud specific. Choose the link to the specific course you feel is applicable and you can get started
 
-|            | TypeScript            | Python                   | C#                       | 
-| ------     | -------               | -------                  | -------                  |
-| AWS        |   [Get started][1]    |   [Get started][2]       |   Coming soon            |
-| Azure      |   Coming soon         |   Coming soon            |   Coming soon            |
-| GCP        |   Coming Soon         |   Coming soon            |   Coming soon            |
+|            | TypeScript            | Python                   | Go                       | C#                       | 
+| ------     | -------               | -------                  | -------                  | -------                  |
+| AWS        |   [Get started][1]    |   [Get started][2]       |   Coming soon            |   Coming soon            |
+| Azure      |   Coming soon         |   Coming soon            |   Coming soon            |   Coming soon            |
+| GCP        |   Coming Soon         |   Coming soon            |   Coming soon            |   Coming soon            |
 
 ## Next Steps
 

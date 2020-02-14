@@ -91,7 +91,7 @@ service = aws.ecs.Service("app-svc",
         "container_name": "my-app",
         "container_port": 80
     }],
-    __opts__=ResourceOptions(depends_on=[wl])
+    opts=ResourceOptions(depends_on=[wl])
 )
 
 export("url", alb.dns_name)
