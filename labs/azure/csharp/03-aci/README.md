@@ -19,7 +19,7 @@ using Pulumi.Azure.ContainerService;
 using Pulumi.Azure.ContainerService.Inputs;
 ```
 
-```typescript
+```csharp
 ...
 var group = new Group("aci", new GroupArgs
 {

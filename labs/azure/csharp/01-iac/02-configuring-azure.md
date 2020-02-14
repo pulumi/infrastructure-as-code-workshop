@@ -7,7 +7,7 @@ Now that you have a basic project, let's configure Azure support for it.
 Run the following command to install the Azure package:
 
 ```bash
-dotnet add package Pulumi.Azure --version 1.12.0-preview
+dotnet add package Pulumi.Azure --version 1.14.0-preview
 ```
 
 *Note: Pulumi .NET SDK is still in preview, so we need to specify the NuGet package version explicitly.*

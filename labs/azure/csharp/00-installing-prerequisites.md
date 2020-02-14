@@ -39,11 +39,9 @@ $ az
 Welcome to the cool new Azure CLI!
 ```
 
-Now, login to your Azure account by typing `az login` and providing your credentials in the browser window. When this is done, type `az account show` to display the active subscription. If you have multiple subscriptions and the wrong one is shown, [change the active subscription](https://docs.microsoft.com/en-us/cli/azure/manage-azure-subscriptions-azure-cli?view=azure-cli-latest#change-the-active-subscription).
-
 ## .NET Core SDK
 
- Pulumi will need the `dotnet` executable in order to build and run your Pulumi .NET application.
+Pulumi will need the `dotnet` executable in order to build and run your Pulumi .NET application.
 
 Install .NET Core 3.1 SDK from [here](https://dotnet.microsoft.com/download).
 

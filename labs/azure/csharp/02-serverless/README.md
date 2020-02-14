@@ -72,7 +72,7 @@ var app = new Azure.AppService.FunctionApp("fa", new Azure.AppService.FunctionAp
 });
 ```
 
-Fill in the TODO blocks as the hints suggest.
+As an excercise, fill in the TODO blocks as the hints suggest.
 
 The applications settings configure the app to run on Node.js v10 runtime and deploy the specified zip file to the Function App. The app will download the specified file, extract the code from it, discover the functions, and run them. We’ve prepared this zip file for you to get started faster, you can find its code [here](https://github.com/mikhailshilkov/mikhailio-hugo/tree/master/content/lab/materials/app). The code contains a single HTTP-triggered Azure Function.
 

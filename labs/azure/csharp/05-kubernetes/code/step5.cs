@@ -53,13 +53,9 @@ class MyStack : Stack
             .Apply(s => s.LoadBalancer)
             .Apply(lb => lb.Ingress)
             .GetAt(0)
-            .Apply(i => i.Hostname);
-        var port = service.Spec
-            .Apply(s => s.Ports)
-            .GetAt(0)
-            .Apply(p => p.Port);
+            .Apply(i => i.Ip);
 
-        this.Url = Output.Format($"http://{address}:{port}");
+        this.Url = Output.Format($"http://{address}");
     }
 
     [Output]

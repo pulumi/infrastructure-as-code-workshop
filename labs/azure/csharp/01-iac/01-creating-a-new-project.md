@@ -44,7 +44,6 @@ Our project is comprised of multiple files:
 * **`iac-workshop.csproj`**: your C# project file
 * **`Pulumi.yaml`**: your project's metadata, containing its name and language
 * **`Pulumi.dev.yaml`**: your stack's metadata, containing its name and configuration variables
-* **`tsconfig.json`**: your project's TypeScript settings
 * **`bin/`** and **`obj/`**: directories containing your project's build artifacts
 
 Open `MyStack.cs` to see the contents of the empty program of your infrastructure stack:

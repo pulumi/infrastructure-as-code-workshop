@@ -49,7 +49,7 @@ A single resource is added and the 2 existing resources are left unchanged. This
 
 ## Step 2 &mdash; Export Your New Storage Account Name
 
-To inspect your new bucket, you will need its physical Azure name. Pulumi records a logical name, `mystorage`, however the resulting Azure name will be different.
+To inspect your new storage account, you will need its physical Azure name. Pulumi records a logical name, `mystorage`, however the resulting Azure name will be different.
 
 Programs can export variables which will be shown in the CLI and recorded for each deployment. Export your account's name by changing `MyStack.cs` to:
 
@@ -105,7 +105,7 @@ Permalink: https://app.pulumi.com/myuser/iac-workshop/dev/updates/3
 
 The difference between logical and physical names is in part due to "auto-naming" which Pulumi does to ensure side-by-side projects and zero-downtime upgrades work seamlessly. It can be disabled if you wish; [read more about auto-naming here](https://www.pulumi.com/docs/intro/concepts/programming-model/#autonaming).
 
-Autonaming is very handy in our case. Each Storage Account receives a subdomain of blob.core.windows.net, therefore the name has to be globally unique across all Azure subscriptions worldwide. Instead of inventing such a name, we can trust Pulumi to generate one.
+Autonaming is very handy in our case. Each Storage Account receives a subdomain of `blob.core.windows.net`, therefore the name has to be globally unique across all Azure subscriptions worldwide. Instead of inventing such a name, we can trust Pulumi to generate one.
 
 Also, we haven’t defined an explicit location for the Storage Account. By default, Pulumi inherits the location from the Resource Group. You can always override it with the `Location` property if needed.
 

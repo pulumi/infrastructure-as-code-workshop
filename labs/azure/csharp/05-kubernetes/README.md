@@ -8,11 +8,11 @@ In this lab, you will deploy a containerized application to a Kubernetes cluster
 
 ## Step 1 &mdash; Configure Access to a Cluster
 
-Cloud providers like AWS, Azure, Google Cloud offer managed Kubernetes cluster hosting. This makes it easier to create and manage new clusters compared to doing so by hand. In this lab, you will deploy a load-balanced, containzerized application to an existing Kubernetes cluster.
+Cloud providers like Azure, Google Cloud, AWS offer managed Kubernetes cluster hosting. This makes it easier to create and manage new clusters compared to doing so by hand. In this lab, you will deploy a load-balanced, containzerized application to an existing Kubernetes cluster.
 
 If you are participating in an interactive workshop, you will most likely be given access to an existing Kubernetes cluster. Save the `kubeconfig` file you were given to `~/iac-workshop/kubeconfig`.
 
-> If you do not have a cluster, you can create an Amazon EKS one by following the steps [here](https://github.com/pulumi/examples/tree/master/aws-ts-eks) or an Azure AKS one by following the steps [here](https://github.com/pulumi/examples/tree/master/azure-cs-aks).
+> If you do not have a cluster, you can create an Azure AKS one by following the steps [here](https://github.com/pulumi/examples/tree/master/azure-cs-aks).
 
 Point the `KUBECONFIG` environment variable at your cluster configuration file:
 
@@ -123,13 +123,9 @@ var address = service.Status
     .Apply(s => s.LoadBalancer)
     .Apply(lb => lb.Ingress)
     .GetAt(0)
-    .Apply(i => i.Hostname);
-var port = service.Spec
-    .Apply(s => s.Ports)
-    .GetAt(0)
-    .Apply(p => p.Port);
+    .Apply(i => i.Ip);
 
-this.Url = Output.Format($"http://{address}:{port}");
+this.Url = Output.Format($"http://{address}");
 ```
 
 Where `Url` is a property of `MyStack`:
@@ -139,7 +135,7 @@ Where `Url` is a property of `MyStack`:
 public Output<string> Url { get; set; }
 ```
 
-> :white_check_mark: After these changes, your `index.ts` should [look like this](./code/step5.cs).
+> :white_check_mark: After these changes, your `MyStack.cs` should [look like this](./code/step5.cs).
 
 ## Step 6 &mdash; Deploy Everything
 
@@ -159,12 +155,12 @@ Updating (dev):
  +   └─ kubernetes:apps:Deployment  app-dep           created
 
 Outputs:
-    Url: "http://a413f76f2f82011e9962d024411cd1af-1680698210.eu-central-1.elb.amazonaws.com:80"
+    Url: "http://23.97.174.181"
 
 Resources:
     + 4 created
 
-Duration: 22s
+Duration: 4m12s
 
 Permalink: https://app.pulumi.com/myuser/iac-workshop/dev/updates/1
 ```
@@ -185,7 +181,7 @@ app-dep-8r1febnu-66bffbf565-vx9kv   1/1     Running   0          0m15s
 Curl the resulting endpoint to view the application:
 
 ```bash
-curl $(pulumi stack output url)
+curl $(pulumi stack output Url)
 ```
 
 You should see something like the following:
@@ -194,16 +190,12 @@ You should see something like the following:
 Hello Kubernetes bootcamp! | Running on: app-dep-8r1febnu-66bffbf565-vx9kv | v=1
 ```
 
-> Kubernetes does not wait until the AWS load balancer is fully initialized, so it may take a few minutes before it becomes available.
-
 ## Step 7 &mdash; Update Your Application Configuration
 
 Next, you'll make two changes to the application:
 
 * Scale out to 3 replicas, instead of just 1.
 * Update the version of your application by changing its container image tag.
-
-Note that the application says `Demo application version v0.10.0-blue` in the banner. After deploying, it will change to version `v0.10.0-green`.
 
 First update your deployment's configuration's replica count:
 
@@ -254,7 +246,7 @@ Selecting `details` will reveal the two changed made above:
   pulumi:pulumi:Stack: (same)
     [urn=urn:pulumi:dev::iac-workshop::pulumi:pulumi:Stack::iac-workshop-dev]
     ~ kubernetes:apps/v1:Deployment: (update)
-        [id=joe-duffy/app-dep-8r1febnu]
+        [id=myuser/app-dep-8r1febnu]
         [urn=urn:pulumi:dev::iac-workshop::kubernetes:apps/v1:Deployment::app-dep]
         [provider=urn:pulumi:dev::iac-workshop::pulumi:providers:kubernetes::default_1_2_3::c2145624-bf5a-4e9e-97c6-199096da4c67]
       ~ spec: {
@@ -286,7 +278,7 @@ Updating (dev):
  ~   └─ kubernetes:apps:Deployment  app-dep           updated     [diff: ~spec]
 
 Outputs:
-    url: "http://ae33950ecf82111e9962d024411cd1af-422878052.eu-central-1.elb.amazonaws.com:80"
+    url: "http://23.97.174.181"
 
 Resources:
     ~ 1 updated
@@ -294,28 +286,28 @@ Resources:
 
 Duration: 16s
 
-Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/2
+Permalink: https://app.pulumi.com/myuser/iac-workshop/dev/updates/2
 ```
 
 Query the pods again using your chosen namespace from earlier:
 
 ```bash
-kubectl get pods --namespace joe-duffy
+kubectl get pods --namespace my-name
 ```
 
 Check that there are now three:
 
 ```
 NAME                               READY   STATUS    RESTARTS   AGE
-app-dep-8r1febnu-6cd57d964-c76rx   1/1     Running   0          8m45s
-app-dep-8r1febnu-6cd57d964-rdpn6   1/1     Running   0          8m35s
-app-dep-8r1febnu-6cd57d964-tj6m4   1/1     Running   0          8m56s
+app-dep-8r1febnu-6cd57d964-c76rx   1/1     Running   0          1m45s
+app-dep-8r1febnu-6cd57d964-rdpn6   1/1     Running   0          1m35s
+app-dep-8r1febnu-6cd57d964-tj6m4   1/1     Running   0          1m56s
 ```
 
 Finally, curl the endpoint again:
 
 ```bash
-curl $(pulumi stack output url)
+curl $(pulumi stack output Url)
 ```
 
 And verify that the output now ends in `v=2`, instead of `v=1` (the result of the new container image):
@@ -327,7 +319,7 @@ Hello Kubernetes bootcamp! | Running on: app-dep-8r1febnu-6cd57d964-c76rx | v=2
 If you'd like, do it a few more times, and observe that traffic will be load balanced across the three pods:
 
 ```bash
-for i in {0..10}; do curl $(pulumi stack output url); done
+for i in {0..10}; do curl $(pulumi stack output Url); done
 ```
 
 ## Step 8 &mdash; Destroy Everything
