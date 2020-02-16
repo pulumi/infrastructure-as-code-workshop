@@ -20,3 +20,8 @@ the use of loops to create loadbalanced infrastructure in EC2.
 In this [lab](./lab-03/README.md), you will learn about how to create and deploy container based applications to Elastic
 Container Service (ECS).
 
+### Lab 4 - Deploying Containers to a Kubernetes Cluster
+
+In this [lab](./lab-04/README.md), you will learn about how to create and deploy container based applications to a Kubernetes
+Cluster.
+
