@@ -82,7 +82,7 @@ You don’t need to configure application settings related to Azure Storage conn
 
 ## Step 4 &mdash; Provision the Function App
 
-Finally, declare a stack output called `Endpoint` to export the URL of the Azure Function using the `DefaultHostName` property of the Function App.
+Finally, declare a stack output called `Endpoint` to export the URL of the Azure Function using the `DefaultHostname` property of the Function App.
 
 Define the stack property:
 
@@ -91,7 +91,7 @@ Define the stack property:
 public Output<string> Endpoint { get; set; }
 ```
 
-Now, if you inspect the type of the `Hostname`, you will see that it's `Output<string>` not just `string`. That’s because Pulumi runs your program before it creates any infrastructure, and it wouldn’t be able to put an actual string into the variable. You can think of `Output<T>` as similar to `Task<T>`, although they are not the same thing.
+Now, if you inspect the type of the `app.DefaultHostname`, you will see that it's `Output<string>` not just `string`. That’s because Pulumi runs your program before it creates any infrastructure, and it wouldn’t be able to put an actual string into the variable. You can think of `Output<T>` as similar to `Task<T>`, although they are not the same thing.
 
 You want to export the full endpoint of your Function App. The following line is NOT CORRECT:
 
