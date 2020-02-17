@@ -19,13 +19,13 @@ The Pulumi CLI will ask you to login to your Pulumi account as needed. If you pr
 
 You need an active Azure subscription to deploy the components of the application. You may use your developer subscription, or create a free Azure subscription [here](https://azure.microsoft.com/free/).
 
-Be sure to clean up the resources after you complete the workshop, as described at the last step.
+Be sure to clean up the resources after you complete the workshop, as described at the last step of each lab.
 
 ## Azure CLI
 
 You will use the command-line interface (CLI) tool to log in to an Azure subscription. You can install the CLI tool, as described [here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest).
 
-After you complete the installation, open a command prompt and type az. You should see the welcome message:
+After you complete the installation, open a command prompt and type `az`. You should see the welcome message:
 
 ```
 $ az

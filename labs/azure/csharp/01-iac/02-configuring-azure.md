@@ -42,7 +42,9 @@ Simply login to the Azure CLI and Pulumi will automatically use your credentials
 
 ```
 az login
-To sign in, use a web browser to open the page https://aka.ms/devicelogin and enter the code XXXFAKEXXX to authenticate.
+...
+You have logged in. Now let us find all the subscriptions to which you have access...
+...
 ```
 
 The Azure CLI, and thus Pulumi, will use the Default Subscription by default, however it is possible to override the subscription, by simply setting your subscription ID to the id output from `az account list`’s output:

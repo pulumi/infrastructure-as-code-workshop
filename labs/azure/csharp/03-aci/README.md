@@ -54,7 +54,7 @@ Now, declare a stack output called `Endpoint` and set it to the `Fqdn` (fully-qu
 
 ```csharp
 ...
-    this.Endpoint = Output.Format($"https://{group.Fqdn}");
+    this.Endpoint = Output.Format($"http://{group.Fqdn}");
 }
 
 [Output]
@@ -227,7 +227,7 @@ Updating (dev):
  +   └─ azure:containerservice:Registry   registry          created   
  
 Outputs:
-    Endpoint: "https://my-unique-string.westeurope.azurecontainer.io"
+    Endpoint: "http://my-unique-string.westeurope.azurecontainer.io"
 
 Resources:
     + 2 created
@@ -242,7 +242,7 @@ Permalink: https://app.pulumi.com/myuser/iac-workshop/dev/updates/2
 Now curl the endpoint again to see the newly updated content:
 
 ```bash
-curl $(pulumi stack output url)
+curl $(pulumi stack output Endpoint)
 ```
 
 The result will contain the updated HTML:
