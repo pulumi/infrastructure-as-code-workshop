@@ -82,6 +82,7 @@ Permalink: https://app.pulumi.com/myuser/iac-workshop/dev/updates/1
 
 Now your resource group has been created in your Azure account. Feel free to click the Permalink URL and explore; this will take you to the [Pulumi Console](https://www.pulumi.com/docs/intro/console/), which records your deployment history.
 
+Note that Pulumi appends a suffix to the physical name of the resource group, e.g. `my-groupfa42c229`. The difference between logical and physical names is due to "auto-naming" which Pulumi does to ensure side-by-side projects and zero-downtime upgrades work seamlessly. It can be disabled if you wish; [read more about auto-naming here](https://www.pulumi.com/docs/intro/concepts/programming-model/#autonaming).
 
 ## Next Steps
 

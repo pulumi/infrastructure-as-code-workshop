@@ -36,6 +36,8 @@ pulumi config set azure:location westus2
 
 Feel free to choose any Azure region that supports the services used in these labs ([see this infographic](https://azure.microsoft.com/en-us/global-infrastructure/regions/) for a list of available regions).
 
+The command persists the value to the local `Pulumi.dev.yaml` file. You can view or edit this file at any time to effect the configuration of the current stack.
+
 ## Step 4 &mdash; Login to Azure
 
 Simply login to the Azure CLI and Pulumi will automatically use your credentials:
