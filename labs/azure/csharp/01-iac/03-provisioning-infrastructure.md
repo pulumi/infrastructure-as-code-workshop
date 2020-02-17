@@ -80,7 +80,7 @@ Duration: 8s
 Permalink: https://app.pulumi.com/myuser/iac-workshop/dev/updates/1
 ```
 
-Now our resource group has been created in our Azure account. Feel free to click the Permalink URL and explore; this will take you to the [Pulumi Console](https://www.pulumi.com/docs/intro/console/), which records your deployment history.
+Now your resource group has been created in your Azure account. Feel free to click the Permalink URL and explore; this will take you to the [Pulumi Console](https://www.pulumi.com/docs/intro/console/), which records your deployment history.
 
 
 ## Next Steps
