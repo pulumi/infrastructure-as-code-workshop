@@ -4,7 +4,9 @@ In this lab, you'll create a single Azure Virtual Machine (VM)that serves HTTP o
 
 > This lab assumes you have a project set up and configured to use Azure. If you don't yet, please complete labs [1](../01-iac/01-creating-a-new-project.md), [2](../01-iac/02-configuring-azure.md) and [3](../01-iac/03-provisioning-infrastructure.md) first.
 
-Start with a stack which defines a single resource: a Resource Group.
+If you haven't created a stack yet, run `pulumi config set azure:location westus --stack dev` to create a stack called `dev` and to set your Azure region.
+
+Start with a program which defines a single resource: a Resource Group.
 
 > :white_check_mark: Your initial `MyStack.cs` should [look like this](../01-iac/code/03-provisioning-infrastructure/step1.cs).
 
