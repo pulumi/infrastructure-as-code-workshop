@@ -4,7 +4,7 @@ In this lab, you will deploy a Azure Function Apps with HTTP-triggered serverles
 
 > This lab assumes you have a project set up and configured to use Azure. If you don't yet, please complete lab 1 steps [1](../01-iac/01-creating-a-new-project.md), [2](../01-iac/02-configuring-azure.md) and [3](../01-iac/03-provisioning-infrastructure.md) first.
 
-If you haven't created a stack yet, run `pulumi config set azure:location westus --stack dev` to create a stack called `dev` and to set your Azure region.
+If you haven't created a stack yet, run `pulumi config set azure:location westus --stack dev` to create a stack called `dev` and to set your Azure region (replace `westus` with the closest one).
 
 Start with a program which defines a single resource: a Resource Group.
 
