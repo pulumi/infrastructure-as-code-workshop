@@ -43,7 +43,6 @@ Our project is comprised of multiple files:
 * **`MyStack.cs`**: your stack definition file
 * **`iac-workshop.csproj`**: your C# project file
 * **`Pulumi.yaml`**: your project's metadata, containing its name and language
-* **`Pulumi.dev.yaml`**: your stack's metadata, containing its name and configuration variables
 * **`bin/`** and **`obj/`**: directories containing your project's build artifacts
 
 Open `MyStack.cs` to see the contents of the empty program of your infrastructure stack:
