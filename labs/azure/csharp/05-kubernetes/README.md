@@ -333,7 +333,7 @@ pulumi stack rm
 
 ## Next Steps
 
-Congratulations! :tada: You've deployed a Kubernetes application to an existing EKS cluster, scaled it out, and performed a rolling update of the container image it is running.
+Congratulations! :tada: You've deployed a Kubernetes application to an existing AKS cluster, scaled it out, and performed a rolling update of the container image it is running.
 
 Next, choose amongst these labs:
 
