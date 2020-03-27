@@ -41,7 +41,7 @@ $ npm --version
 6.10.3
 ```
 
-## Pyton (Required for Python Labs)
+## Python (Required for Python Labs)
 
 To run Pulumi programs written in Python, you need at least Python 3.6. Install your desired version of Python3 from
 [the Python download page](https://www.python.org/downloads/). After installing, verify that Python3 is working:
