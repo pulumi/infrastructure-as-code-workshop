@@ -83,12 +83,28 @@ Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/5
 
 ## Step 4 &mdash; Add More Files
 
+Instead of hard-coding the set of files, you will now change the program to read the entire contents of the `www` directory.
+
 Add a new file, `about.html`, to the `www` directory:
 
 ```
 <html>
     <p>Infrastructure as code using real languages is powerful.</p>
 </html>
+```
+
+Now replace the object allocation code as follows:
+
+```python
+for file in os.listdir(site_dir):
+    filepath = os.path.join(site_dir, file)
+    mine_type, _ = mimetypes.guess_type(filepath)
+    obj = aws.s3.BucketObject(file,
+          bucket=bucket.name,
+          source=pulumi.FileAsset(filepath),
+          acl="public_read",
+          content_type=mine_type
+    )
 ```
 
 > :white_check_mark: After these changes, your `__main__.py` should [look like this](./code/05-making-your-stack-configurable/step4.py).

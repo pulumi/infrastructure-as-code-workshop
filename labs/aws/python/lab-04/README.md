@@ -350,10 +350,4 @@ pulumi stack rm
 
 Congratulations! :tada: You've deployed a Kubernetes application to an existing EKS cluster, scaled it out, and performed a rolling update of the container image it is running.
 
-Next, choose amongst these labs:
-
-* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../lab-03/README.md)
-* [Deploying Containers to a Kubernetes Cluster](../lab-04/README.md)
-* [Using AWS Lambda for Serverless Application Patterns](../lab-05/README.md)
-
-Or view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.
+Next, view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.
