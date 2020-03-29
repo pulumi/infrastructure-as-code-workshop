@@ -69,6 +69,20 @@ $ go version
 go version go1.14 darwin/amd64
 ```
 
+You also need to install [go dep](https://github.com/golang/dep#installation). After installing, verify that dep is working:
+
+```bash
+$ dep version
+dep:
+ version     : v0.5.4
+ build date  : 2019-09-29
+ git hash    : 1f7c19e
+ go version  : go1.13
+ go compiler : gc
+ platform    : darwin/amd64
+ features    : ImportDuringSolve=false
+```
+
 ## .NET Core SDK
 
 Pulumi will need the `dotnet` executable in order to build and run your Pulumi .NET application.
