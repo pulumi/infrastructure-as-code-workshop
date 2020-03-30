@@ -6,7 +6,7 @@ Although Pulumi supports many clouds and many languages, you will use Microsoft 
 
 ## Pulumi
 
-You will use Pulumi to depoy infrastructure changes using code. [Install Pulumi here](https://www.pulumi.com/docs/get-started/install/). After installing the CLI, verify that it is working:
+You will use Pulumi to deploy infrastructure changes using code. [Install Pulumi here](https://www.pulumi.com/docs/get-started/install/). After installing the CLI, verify that it is working:
 
 ```bash
 $ pulumi version
