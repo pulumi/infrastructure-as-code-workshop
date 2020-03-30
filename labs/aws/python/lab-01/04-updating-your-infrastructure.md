@@ -101,7 +101,7 @@ Next, your `index.html` object will need two changes: an ACL of `public-read` so
 import mimetypes
 ...
 filepath = os.path.join("site", "index.html")
-mine_type = mimetypes.guess_type(filepath)
+mine_type = mimetypes.guess_type(filepath)[0]
 obj = aws.s3.BucketObject("index.html",
         bucket=bucket.bucket,
         source=pulumi.FileAsset(filepath),
