@@ -18,8 +18,8 @@ A course can be language and cloud specific. Choose the link to the specific cou
 
 |            | TypeScript            | Python                   | Go                       | C#                       | 
 | ------     | -------               | -------                  | -------                  | -------                  |
-| AWS        |   [Get started][1]    |   [Get started][2]       |   [Get started][4]       |   Coming soon            |
-| Azure      |   Coming soon         |   Coming soon            |   Coming soon            |   [Get started][3]            |
+| AWS        |   [Get started][1]    |   [Get started][2]       |   [Get started][4]       |   [Get started][5]       |
+| Azure      |   Coming soon         |   Coming soon            |   Coming soon            |   [Get started][3]       |
 | GCP        |   Coming Soon         |   Coming soon            |   Coming soon            |   Coming soon            |
 
 ## Next Steps
@@ -36,4 +36,5 @@ Thank you for checking out the Infrastructure as Code Workshop! More labs are on
 [1]: ./labs/aws/typescript/README.md
 [2]: ./labs/aws/python/README.md
 [3]: ./labs/azure/csharp/README.md
-[3]: ./labs/aws/go/README.md
+[4]: ./labs/aws/go/README.md
+[5]: ./labs/aws/csharp/README.md
