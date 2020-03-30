@@ -34,7 +34,7 @@ And then add these lines to `__main__.py` right after creating the bucket itself
 ...
 filepath = os.path.join("site", "index.html")
 obj = aws.s3.BucketObject("index.html",
-    bucket=bucket.name,
+    bucket=bucket.bucket,
     source=pulumi.FileAsset(filepath)
 )
 ...
