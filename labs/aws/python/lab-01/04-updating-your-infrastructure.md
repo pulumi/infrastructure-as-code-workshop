@@ -103,7 +103,7 @@ import mimetypes
 filepath = os.path.join("site", "index.html")
 mine_type = mimetypes.guess_type(filepath)
 obj = aws.s3.BucketObject("index.html",
-        bucket=bucket.name,
+        bucket=bucket.bucket,
         source=pulumi.FileAsset(filepath),
         acl="public_read",
         content_type=mine_type
