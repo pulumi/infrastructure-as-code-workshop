@@ -46,15 +46,11 @@ echo ""Hello, World!"" > index.html
 nohup python -m SimpleHTTPServer 80 &
 ";
 
-        var hostNames = Pulumi.Aws.GetAvailabilityZones.InvokeAsync(new Pulumi.Aws.GetAvailabilityZonesArgs()).Result;
-        var hostnames = new List<Output<string>>();
-        var ips = new List<Output<string>>();
-        foreach (var az in hostNames.Names)
+        var azs = Pulumi.Aws.GetAvailabilityZones.InvokeAsync(new Pulumi.Aws.GetAvailabilityZonesArgs()).Result;
+        var hostnames = new List<Input<string>>();
+        var ips = new List<Input<string>>();
+        foreach (var az in azs.Names)
         {
-            if (az == "us-west-2d")
-            {
-                continue;
-            }
             var server = new Pulumi.Aws.Ec2.Instance($"web-server-{az}", new Pulumi.Aws.Ec2.InstanceArgs
             {
                 InstanceType = "t2.micro",
@@ -67,8 +63,11 @@ nohup python -m SimpleHTTPServer 80 &
             hostnames.Add(server.PublicDns);
             ips.Add(server.PublicIp);
         }
+
+        this.PublicIps = Output.All(ips.ToImmutableArray());
+        this.PublicDns = Output.All(hostnames.ToImmutableArray());
     }
-    
-    [Output] public Output<string> PublicIps { get; set; }
-    [Output] public Output<string> PublicDns { get; set; }
+
+    [Output] public Output<ImmutableArray<string>> PublicIps { get; set; }
+    [Output] public Output<ImmutableArray<string>> PublicDns { get; set; }
 }

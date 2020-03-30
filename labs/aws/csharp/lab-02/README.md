@@ -145,10 +145,10 @@ your region. Replace the part of your code that creates the webserver and export
 
 ```cs
 ...
-var hostNames = Pulumi.Aws.GetAvailabilityZones.InvokeAsync(new Pulumi.Aws.GetAvailabilityZonesArgs()).Result;
-var hostnames = new List<Output<string>>();
-var ips = new List<Output<string>>();
-foreach (var az in hostNames.Names)
+var azs = Pulumi.Aws.GetAvailabilityZones.InvokeAsync(new Pulumi.Aws.GetAvailabilityZonesArgs()).Result;
+var hostnames = new List<Input<string>>();
+var ips = new List<Input<string>>();
+foreach (var az in azs.Names)
 {
     var server = new Pulumi.Aws.Ec2.Instance($"web-server-{az}", new Pulumi.Aws.Ec2.InstanceArgs
     {
@@ -162,6 +162,20 @@ foreach (var az in hostNames.Names)
     hostnames.Add(server.PublicDns);
     ips.Add(server.PublicIp);
 }
+```
+
+We need to change the output parameters:
+
+```csharp
+[Output] public Output<ImmutableArray<string>> PublicIps { get; set; }
+[Output] public Output<ImmutableArray<string>> PublicDns { get; set; }
+```
+
+and now we can set the parameters as follows:
+
+```csharp
+this.PublicIps = Output.All(ips.ToImmutableArray());
+this.PublicDns = Output.All(hostnames.ToImmutableArray());
 ```
 
 > :white_check_mark: After this change, your `MyStack.cs` should [look like this](./code/step3.cs).
@@ -185,18 +199,18 @@ Updating (dev):
  -   └─ aws:ec2:Instance  web-server                deleted
 
 Outputs:
-  + hostnames     : [
+  + PublicDns     : [
   +     [0]: "ec2-18-197-184-46.eu-central-1.compute.amazonaws.com"
   +     [1]: "ec2-18-196-225-191.eu-central-1.compute.amazonaws.com"
   +     [2]: "ec2-35-158-83-62.eu-central-1.compute.amazonaws.com"
     ]
-  + ips           : [
+  + PublicIps           : [
   +     [0]: "18.197.184.46"
   +     [1]: "18.196.225.191"
   +     [2]: "35.158.83.62"
     ]
-  - hostname: "ec2-52-57-250-206.eu-central-1.compute.amazonaws.com"
-  - ip      : "52.57.250.206"
+  - PublicDns: "ec2-52-57-250-206.eu-central-1.compute.amazonaws.com"
+  - PublicIps      : "52.57.250.206"
 
 Resources:
     + 3 created
@@ -213,7 +227,7 @@ Notice that your original server was deleted and new ones created in its place, 
 To test the changes, curl any of the resulting IP addresses or hostnames:
 
 ```bash
-for i in {0..2}; do curl $(pulumi stack output hostnames | jq -r ".[${i}]"); done
+for i in {0..2}; do curl $(pulumi stack output PublicDns | jq -r ".[${i}]"); done
 ```
 
 > The count of servers depends on the number of AZs in your region. Adjust the `{0..2}` accordingly.
@@ -221,12 +235,10 @@ for i in {0..2}; do curl $(pulumi stack output hostnames | jq -r ".[${i}]"); don
 > The `pulumi stack output` command emits JSON serialized data &mdash; hence the use of the `jq` tool to extract a 
 >specific index. If you don't have `jq`, don't worry; simply copy-and-paste the hostname or IP address from the console output and `curl` that.
 
-Note that the webserver number is included in its response:
-
 ```
-Hello, World -- from eu-central-1a!
-Hello, World -- from eu-central-1b!
-Hello, World -- from eu-central-1c!
+Hello, World!
+Hello, World!
+Hello, World!
 ```
 
 ## Step 4 &mdash; Create a Load Balancer

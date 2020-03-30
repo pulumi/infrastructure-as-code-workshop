@@ -9,7 +9,7 @@ class MyStack : Stack
         var vpcId = vpc.Apply(vpc => vpc.Id);
         var subnet = vpcId.Apply(id => Pulumi.Aws.Ec2.GetSubnetIds.InvokeAsync(new Pulumi.Aws.Ec2.GetSubnetIdsArgs {VpcId = id}));
         var subnetIds = subnet.Apply(s => s.Ids);
-        
+
         var ami = Output.Create(Pulumi.Aws.GetAmi.InvokeAsync(new Pulumi.Aws.GetAmiArgs
         {
             MostRecent = true,
@@ -19,7 +19,7 @@ class MyStack : Stack
                 Name = "name", Values = {"amzn-ami-hvm-*"}
             }}
         }));
-        
+
         var group = new Pulumi.Aws.Ec2.SecurityGroup("web-secgrp", new Pulumi.Aws.Ec2.SecurityGroupArgs
         {
             Description = "Enable HTTP access",
@@ -51,7 +51,7 @@ class MyStack : Stack
                 }
             }
         });
-        
+
         var loadbalancer = new Pulumi.Aws.LB.LoadBalancer("external-loadbalancer", new Pulumi.Aws.LB.LoadBalancerArgs
         {
             Internal = false,
@@ -63,7 +63,7 @@ class MyStack : Stack
             LoadBalancerType = "application",
         });
         this.Url = loadbalancer.DnsName;
-        
+
         var targetGroup = new Pulumi.Aws.LB.TargetGroup("target-group", new Pulumi.Aws.LB.TargetGroupArgs
         {
             Port = 80,
@@ -85,20 +85,16 @@ class MyStack : Stack
                 }
             }
         });
-        
+
         var userData = @"
 #!/bin/bash
 echo ""Hello, World!"" > index.html
 nohup python -m SimpleHTTPServer 80 &
 ";
 
-        var hostNames = Pulumi.Aws.GetAvailabilityZones.InvokeAsync(new Pulumi.Aws.GetAvailabilityZonesArgs()).Result;
-        foreach (var az in hostNames.Names)
+        var azs = Pulumi.Aws.GetAvailabilityZones.InvokeAsync(new Pulumi.Aws.GetAvailabilityZonesArgs()).Result;
+        foreach (var az in azs.Names)
         {
-            if (az == "us-west-2d")
-            {
-                continue;
-            }
             var server = new Pulumi.Aws.Ec2.Instance($"web-server-{az}", new Pulumi.Aws.Ec2.InstanceArgs
             {
                 InstanceType = "t2.micro",
@@ -107,7 +103,7 @@ nohup python -m SimpleHTTPServer 80 &
                 Ami = ami.Apply(a => a.Id),
                 AvailabilityZone = az,
             });
-            
+
             var attachment = new Pulumi.Aws.LB.TargetGroupAttachment($"web-server-{az}", new Pulumi.Aws.LB.TargetGroupAttachmentArgs
             {
                 Port = 80,
@@ -116,6 +112,6 @@ nohup python -m SimpleHTTPServer 80 &
             });
         }
     }
-    
+
     [Output] public Output<string> Url { get; set; }
 }
