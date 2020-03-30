@@ -105,7 +105,7 @@ mine_type = mimetypes.guess_type(filepath)
 obj = aws.s3.BucketObject("index.html",
         bucket=bucket.bucket,
         source=pulumi.FileAsset(filepath),
-        acl="public_read",
+        acl="public-read",
         content_type=mine_type
 )
 ...
