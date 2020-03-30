@@ -34,7 +34,7 @@ And then add these lines to `__main__.py` right after creating the bucket itself
 ...
 filepath = os.path.join("site", "index.html")
 obj = aws.s3.BucketObject("index.html",
-    bucket=bucket.bucket,
+    bucket=bucket.id,
     source=pulumi.FileAsset(filepath)
 )
 ...
@@ -103,7 +103,7 @@ import mimetypes
 filepath = os.path.join("site", "index.html")
 mine_type = mimetypes.guess_type(filepath)[0]
 obj = aws.s3.BucketObject("index.html",
-        bucket=bucket.bucket,
+        bucket=bucket.id,
         source=pulumi.FileAsset(filepath),
         acl="public-read",
         content_type=mine_type
