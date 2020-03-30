@@ -34,7 +34,7 @@ And then add these lines to `__main__.py` right after creating the bucket itself
 ...
 filepath = os.path.join("site", "index.html")
 obj = aws.s3.BucketObject("index.html",
-    bucket=bucket.name,
+    bucket=bucket.bucket,
     source=pulumi.FileAsset(filepath)
 )
 ...
@@ -98,6 +98,7 @@ bucket = aws.s3.Bucket("my-bucket",
 Next, your `index.html` object will need two changes: an ACL of `public-read` so that it can be accessed anonymously over the Internet, and a content type so that it is served as HTML:
 
 ```python
+import mimetypes
 ...
 filepath = os.path.join("site", "index.html")
 mine_type = mimetypes.guess_type(filepath)
