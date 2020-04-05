@@ -10,7 +10,7 @@ You will use Pulumi to deploy infrastructure changes using code. [Install Pulumi
 
 ```bash
 $ pulumi version
-v1.10.1
+v1.13.1
 ```
 
 The Pulumi CLI will ask you to login to your Pulumi account as needed. If you prefer to signup now, [go to the signup page](http://app.pulumi.com/signup). Multiple identity provider options are available &mdash; email, GitHub, GitLab, or Atlassian &mdash; and each of them will work equally well for these labs.
@@ -39,18 +39,26 @@ $ az
 Welcome to the cool new Azure CLI!
 ```
 
-## .NET Core SDK
+## Python 
 
-Pulumi will need the `dotnet` executable in order to build and run your Pulumi .NET application.
+Pulumi will need the an installation of Python 3.6 or later
 
-Install .NET Core 3.1 SDK from [here](https://dotnet.microsoft.com/download).
+https://www.python.org/downloads/
 
-Ensure that the `dotnet` executable can be found on your path after installation.
+  in order to run your Pulumi Python application.
+
+Install Python 3.6 from [here](https://www.python.org/downloads/), or your preferred distribution.
+
+Ensure that the `python` (**for windows**) or `python3` (**for mac or linux**) executable can be found in your terminal path after installation.
+
+Instructions will refer to `python` for consistency, but if you are on mac or linux, use the appropriate command.
 
 ```bash
-$ dotnet --version
-3.1.100
+$ python --version 
+Python 3.7.6
 ```
+
+If you have trouble setting python up on your machine, see [Python 3 Installation and Setup Guide](https://realpython.com/installing-python/).
 
 ## Docker (Optional)
 
