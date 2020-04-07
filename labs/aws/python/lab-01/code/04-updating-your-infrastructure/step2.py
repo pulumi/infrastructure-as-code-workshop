@@ -9,12 +9,12 @@ bucket = aws.s3.Bucket("my-bucket",
 })
 
 filepath = os.path.join("site", "index.html")
-mine_type = mimetypes.guess_type(filepath)
+mime_type, _ = mimetypes.guess_type(filepath)
 obj = aws.s3.BucketObject("index.html",
         bucket=bucket.name,
         source=pulumi.FileAsset(filepath),
         acl="public_read",
-        content_type=mine_type
+        content_type=mime_type
 )
 
 pulumi.export('bucket_name', bucket.bucket)
