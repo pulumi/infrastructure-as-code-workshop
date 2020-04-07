@@ -115,7 +115,7 @@ Finally, export the resulting bucket's endpoint URL so we can easily access it:
 
 ```python
 ...
-pulumi.export('bucket_endpoint', f'http://{bucket.website_endpoint}')
+pulumi.export('bucket_endpoint', pulumi.Output.concat("http://", bucket.website_endpoint))
 ...
 ```
 
