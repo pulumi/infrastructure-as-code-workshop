@@ -31,7 +31,7 @@ Your new project is ready to go! ✨
 
 To perform an initial deployment, run the following commands:
 
-   1. virtualenv -p python3 venv
+   1. python3 -m venv venv
    2. source venv/bin/activate
    3. pip3 install -r requirements.txt
 
@@ -46,7 +46,7 @@ to install our dependencies as part of our virtualenv
 We now need to create our virtual environment as suggested in the output of `pulumi new` in step 2 by following the commands:
 
 ```bash
-$ virtualenv -p python3 venv
+$ python3 -m venv venv
 ```
 
 ```bash
