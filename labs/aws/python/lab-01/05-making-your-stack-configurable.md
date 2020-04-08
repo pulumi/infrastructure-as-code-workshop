@@ -20,7 +20,7 @@ And replace the hard-coded `"site"` parameter with this imported `siteDir` varia
 
 ```python
 filepath = os.path.join(site_dir, "index.html")
-mine_type = mimetypes.guess_type(filepath)
+mime_type = mimetypes.guess_type(filepath)
 
 obj = aws.s3.BucketObject("index.html",
     bucket=bucket.name,
@@ -98,12 +98,12 @@ Now replace the object allocation code as follows:
 ```python
 for file in os.listdir(site_dir):
     filepath = os.path.join(site_dir, file)
-    mine_type, _ = mimetypes.guess_type(filepath)
+    mime_type, _ = mimetypes.guess_type(filepath)
     obj = aws.s3.BucketObject(file,
           bucket=bucket.name,
           source=pulumi.FileAsset(filepath),
           acl="public_read",
-          content_type=mine_type
+          content_type=mime_type
     )
 ```
 
