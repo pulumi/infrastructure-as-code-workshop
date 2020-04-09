@@ -22,4 +22,4 @@ for file in os.listdir(site_dir):
     )
 
 pulumi.export('bucket_name', bucket.bucket)
-pulumi.export('bucket_endpoint', f'http://{bucket.website_endpoint}')
+pulumi.export('bucket_endpoint', pulumi.Output.concat("http://", bucket.website_endpoint))
