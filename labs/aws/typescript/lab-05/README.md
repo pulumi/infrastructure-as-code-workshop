@@ -1,316 +1,325 @@
-# Using AWS Lambda for Serverless Application Patterns
+# Deploying Containers to a Kubernetes Cluster
 
-In this lab, you will create a serverless web application that uses API Gateway and Lambda, along with a dynamic DynamoDB-based hit counter.
+In this lab, you will deploy a containerized application to a Kubernetes cluster.
 
-> This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete parts [1](../lab-01/01-creating-a-new-project.md) 
->and [2](../lab-01/02-configuring-aws.md) of lab-01.
+> This lab assumes you have a project set up and a Kubernetes cluster up and running.
+> If you don't have a cluster yet, please [complete this lab first](../lab-04/README.md).
 
-## Step 1 &mdash; Install Dependencies
+## Step 1 &mdash; Use a Kubernetes Cluster
 
-To start, install the AWS SDK package. This will allow you to query your DynamoDB table from your Lambda:
+Configure the use of a [StackReference][stack-refs] to the Kubernetes cluster
+stack to extract and use the kubeconfig. This can be found in the [last
+section](../lab-04/README.md#next-steps) of the previous lab.
 
-```bash
-npm install aws-sdk
+From your project's root directory, install the Pulumi and Kubernetes packages:
+
+```
+npm install @pulumi/pulumi @pulumi/kubernetes
 ```
 
-Now import the necessary packages in the top of an empty `index.ts` file:
+Next, add these imports to your `index.ts` file:
 
 ```typescript
-import * as AWS from "aws-sdk";
-import * as aws from "@pulumi/aws";
-import * as awsx from "@pulumi/awsx";
-import * as pulumi from "@pulumi/pulumi";
+import * as k8s from "@pulumi/kubernetes";
+import * as pulumi from "@pulumi/pulumi"
+```
+
+Create a StackReference to the Kubernetes cluster stack using the config
+`clusterStackRef` stack setting.
+
+```typescript
+let pulumiConfig = new pulumi.Config();
+
+// Existing Pulumi stack reference in the format:
+// <organization>/<project>/<stack> e.g. "myUser/myProject/dev"
+const clusterStackRef = new pulumi.StackReference(pulumiConfig.require("clusterStackRef"));
+```
+
+Next, we need to declare a new Kubernetes provider based on the kubeconfig created in
+the cluster stack. To do this, add this to your `index.ts` file
+
+```typescript
+// Get the kubeconfig from the cluster stack output.
+const kubeconfig = clusterStackRef.getOutput("kubeconfig").apply(JSON.stringify);
+
+// Create the k8s provider with the kubeconfig.
+const provider = new k8s.Provider("k8sProvider", {kubeconfig});
 ```
 
 > :white_check_mark: After this change, your `index.ts` should [look like this](./code/step1.ts).
 
-## Step 2 &mdash; Create a DynamoDB Table
+[stack-refs]: https://www.pulumi.com/docs/intro/concepts/organizing-stacks-projects/#inter-stack-dependencies
 
-Now define your DynamoDB table. This provisions a serverless NoSQL database table where you only pay for what you use:
+## Step 2 &mdash; Create a Namespace
+
+Next, declare a [namespace object](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/). This will scope your objects to a name of your choosing, so that in this workshop you won't accidentally interfere with other participants.
+
+Append this to your `index.ts` file, replacing `joe-duffy` with your own name and referencing the Provider created in step1:
 
 ```typescript
-...
-const hits = new aws.dynamodb.Table("hits", {
-    attributes: [{ name: "Site", type: "S" }],
-    hashKey: "Site",
-    billingMode: "PAY_PER_REQUEST",
-});
+const ns = new k8s.core.v1.Namespace("app-ns", {
+    metadata: { name: "joe-duffy" },
+}, {provider});
 ```
-
-The schema for this table is quite simple because this instance will only store a single global counter for the entire website.
 
 > :white_check_mark: After this change, your `index.ts` should [look like this](./code/step2.ts).
 
-## Step 3 &mdash; Create IAM Policies
+## Step 3 &mdash; Declare Your Application's Deployment Object
 
-Before creating your website, the Lambda will need a certain IAM role and permission. This permits the Lambda's function
-to assume the right identity at runtime, log into CloudWatch to aid with debugging, and to use the DynamoDB table defined above:
+You'll now declare a [deployment object](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), which deploys a specific set of containers to the cluster and scales them. In this case, you'll deploy the pre-built `gcr.io/google-samples/kubernetes-bootcamp:v1` container image with only a single replica.
+
+Append this to your `index.ts` file:
 
 ```typescript
-...
-const handlerRole = new aws.iam.Role("handler-role", {
-    assumeRolePolicy: {
-        Version: "2012-10-17",
-        Statement: [{
-            Action: "sts:AssumeRole",
-            Principal: {
-                Service: "lambda.amazonaws.com"
+const appLabels = { app: "iac-workshop" };
+const deployment = new k8s.apps.v1.Deployment("app-dep", {
+    metadata: { namespace: ns.metadata.name },
+    spec: {
+        selector: { matchLabels: appLabels },
+        replicas: 1,
+        template: {
+            metadata: { labels: appLabels },
+            spec: {
+                containers: [{
+                    name: "iac-workshop",
+                    image: "gcr.io/google-samples/kubernetes-bootcamp:v1",
+                }],
             },
-            Effect: "Allow",
-            Sid: "",
-        }],
+        },
     },
-});
-
-const handlerPolicy = new aws.iam.RolePolicy("handler-policy", {
-    role: handlerRole,
-    policy: hits.arn.apply(arn => JSON.stringify({
-        Version: "2012-10-17",
-        Statement: [
-            {
-                Action: [
-                    "dynamodb:UpdateItem",
-                    "dynamodb:PutItem",
-                    "dynamodb:GetItem",
-                    "dynamodb:DescribeTable",
-                ],
-                Resource: arn,
-                Effect: "Allow",
-            },
-            {
-                Action: ["logs:*", "cloudwatch:*"],
-                Resource: "*",
-                Effect: "Allow",
-            },
-        ],
-    })),
-});
+}, {provider});
 ```
 
 > :white_check_mark: After this change, your `index.ts` should [look like this](./code/step3.ts).
 
-## Step 4 &mdash; Create a Lambda-Based API Gateway
+## Step 4 &mdash; Declare Your Application's Service Object
 
-Now create an API Gateway powered by Lambda for its sole REST API handler for `GET` requests at the `/` route.
+Next, you'll declare a [service object](https://kubernetes.io/docs/concepts/services-networking/service/), which enables networking and load balancing across your deployment replicas.
 
-The first step is to create the code for the Lambda itself &mdash; this is the code that will run in response to an API
-call at runtime. Place this code into a new `handler/index.js` file:
+Append this to your `index.ts` file:
 
-```javascript
-const AWS = require("aws-sdk");
-
-exports.handler = async function(event, context, callback) {
-    console.log("Received event: ", event);
-    const dc = new AWS.DynamoDB.DocumentClient();
-    const result = await dc.update({
-        TableName: process.env["HITS_TABLE"],
-        Key: { "Site": "ACMECorp" },
-        UpdateExpression: "SET Hits = if_not_exists(Hits, :zero) + :incr",
-        ExpressionAttributeValues: { ":zero": 0, ":incr": 1 },
-        ReturnValues: "UPDATED_NEW",
-    }).promise();
-    return {
-        statusCode: 200,
-        headers: { "Content-Type": "text/html" },
-        body: "<h1>Welcome to ACMECorp!</h1>\n"+
-            `<p>${result.Attributes.Hits} hits.</p>\n`,
-    };
-};
+```typescript
+const service = new k8s.core.v1.Service("app-svc", {
+    metadata: { namespace: ns.metadata.name },
+    spec: {
+        selector: appLabels,
+        ports: [{ port: 80, targetPort: 8080 }],
+        type: "LoadBalancer",
+    },
+}, {provider});
 ```
 
-Next, create the API Gateway and Lambda-based handler to `index.ts`:
+Afterwards, add these lines to export the resulting, dynamically assigned endpoint for the resulting load balancer:
 
 ```typescript
 ...
-const site = new awsx.apigateway.API("site", {
-    routes: [{
-        path: "/",
-        method: "GET",
-        eventHandler: new aws.lambda.Function("get-handler", {
-            runtime: aws.lambda.NodeJS10dXRuntime,
-            code: new pulumi.asset.AssetArchive({
-                ".": new pulumi.asset.FileArchive("handler"),
-            }),
-            handler: "index.handler",
-            role: handlerRole.arn,
-            environment: {
-                variables: {
-                    "HITS_TABLE": hits.name,
-                },
-            },
-        }, { dependsOn: handlerPolicy }),
-    }],
-});
-export const url = site.url;
+const address = service.status.loadBalancer.ingress[0].hostname;
+const port = service.spec.ports[0].port;
+export const url = pulumi.interpolate`http://${address}:${port}`;
 ```
 
 > :white_check_mark: After these changes, your `index.ts` should [look like this](./code/step4.ts).
 
-Notice this definition references the code stored in `handler/index.js` file through the use of an "asset" &mdash; a mechanism
-for packaging up files and directories for use by your infrastructure. At the end, your API's base URL will be printed out.
-
 ## Step 5 &mdash; Deploy Everything
 
-To provision everything, run:
+First, add the `StackReference` to the cluster stack, which is used to get the kubeconfig
+from its stack output.
+
+> This can be found in the [last section](../lab-04/README.md#next-steps) of the previous lab.
+
+```bash
+pulumi config set iac-workshop-apps:clusterStackRef joeduffy/iac-workshop-cluster/dev
+```
+
+Deploy Everything:
 
 ```bash
 pulumi up
 ```
 
-After confirming, you will see output like the following:
+This will show you a preview and, after selecting `yes`, the application will be deployed:
 
 ```
 Updating (dev):
 
-     Type                             Name              Status
- +   pulumi:pulumi:Stack              iac-workshop-dev  created
- +   ├─ aws:apigateway:x:API          site              created
- +   │  ├─ aws:apigateway:RestApi     site              created
- +   │  ├─ aws:apigateway:Deployment  site              created
- +   │  ├─ aws:lambda:Permission      site-fa520765     created
- +   │  └─ aws:apigateway:Stage       site              created
- +   ├─ aws:dynamodb:Table            hits              created
- +   ├─ aws:iam:Role                  handler-role      created
- +   ├─ aws:iam:RolePolicy            handler-policy    created
- +   └─ aws:lambda:Function           get-handler       created
+     Type                             Name                                    Status
+ +   pulumi:pulumi:Stack              iac-workshop-apps                       created
+ +   ├─ pulumi:providers:kubernetes   k8s-provider                            created
+ +   ├─ kubernetes:core:Namespace     app-ns                                  created
+ +   ├─ kubernetes:core:Service       app-service                             created
+ +   └─ kubernetes:apps:Deployment    app-dep                                 created
 
 Outputs:
-    url: "https://nnr5b2m5h5.execute-api.eu-central-1.amazonaws.com/stage/"
+    url: "http://ae7c37b7c510511eab4540a6f2211784-521581596.us-west-2.elb.amazonaws.com:80"
 
 Resources:
-    + 10 created
+    + 5 created
 
-Duration: 25s
+Duration: 32s
 
-Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/1
+Permalink: https://app.pulumi.com/joeduffy/iac-workshop-apps/dev/updates/1
 ```
 
-After provisioning, you can access your new site at the resulting URL. For fun, curl it a few times:
+List the pods in your namespace, again replacing `joe-duffy` with the namespace you chose earlier:
 
 ```bash
-for i in {1..5}; do curl $(pulumi stack output url); done
+kubectl get pods --namespace joe-duffy
 ```
 
-Notice that the counter increases:
+And you should see a single replica:
 
 ```
-<h1>Welcome to ACMECorp!</h1>
-<p>1 hits.</p>
-<h1>Welcome to ACMECorp!</h1>
-<p>2 hits.</p>
-<h1>Welcome to ACMECorp!</h1>
-<p>3 hits.</p>
-<h1>Welcome to ACMECorp!</h1>
-<p>4 hits.</p>
-<h1>Welcome to ACMECorp!</h1>
-<p>5 hits.</p>
+NAME                                READY   STATUS    RESTARTS   AGE
+app-dep-8r1febnu-66bffbf565-vx9kv   1/1     Running   0          0m15s
 ```
 
-## Step 6 &mdash; Replace the App with Inline Code
+Curl the resulting endpoint to view the application:
 
-It's possible to simplify this serverless application by moving the runtime code into the infrastructure definition. This
-isn't always the right way to design your infrastructure as code, but for "fully serverless" applications like this one,
-where the boundary between application and infrastructure is intentionally blurred, this can be a great way to go.
+```bash
+curl $(pulumi stack output url)
+```
 
-First, delete the IAM `handlerRole` and `handlerPolicy` definitions altogether.
+You should see something like the following:
 
-Next, replace your API Gateway `site` with the following code:
+```
+Hello Kubernetes bootcamp! | Running on: app-dep-8r1febnu-66bffbf565-vx9kv | v=1
+```
 
-```typescript
+> Kubernetes does not wait until the AWS load balancer is fully initialized, so it may take a few minutes before it becomes available.
+
+## Step 6 &mdash; Update Your Application Configuration
+
+Next, you'll make two changes to the application:
+
+* Scale out to 3 replicas, instead of just 1.
+* Update the version of your application by changing its container image tag
+
+Note that the application says `Demo application version v0.10.0-blue` in the banner. After deploying, it will change to version `v0.10.0-green`.
+
+First update your deployment's configuration's replica count:
+
+```
 ...
-const site = new awsx.apigateway.API("site", {
-    routes: [{
-        path: "/",
-        method: "GET",
-        eventHandler: async () => {
-            const dc = new AWS.DynamoDB.DocumentClient();
-            const result = await dc.update({
-                TableName: hits.name.get(),
-                Key: { "Site": "ACMECorp" },
-                UpdateExpression: "SET Hits = if_not_exists(Hits, :zero) + :incr",
-                ExpressionAttributeValues: { ":zero": 0, ":incr": 1 },
-                ReturnValues: "UPDATED_NEW",
-            }).promise();
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "text/html" },
-                body: "<h1>Welcome to ACMECorp!</h1>\n"+
-                    `<p>${result.Attributes!.Hits} hits.</p>\n`,
-            };
-        },
-    }],
-});
+  replicas=3,
 ...
 ```
 
-Remember to keep the line at the end to export the `url`. It is safe to also delete the `handler/index.js` file altogether now.
+And then update its image to:
+
+```
+...
+  image="jocatalin/kubernetes-bootcamp:v2",
+...
+```
 
 > :white_check_mark: After this change, your `index.ts` should [look like this](./code/step6.ts).
 
-Next, run an update:
+Deploy your updates:
 
 ```bash
 pulumi up
 ```
 
-The output will look something like this:
+This will show you that the deployment has changed:
+
+```
+Previewing update (dev):
+
+     Type                           Name              Plan       Info
+     pulumi:pulumi:Stack            iac-workshop-apps-dev
+ ~   └─ kubernetes:apps:Deployment  app-dep           update     [diff: ~spec]
+
+Resources:
+    ~ 1 to update
+    3 unchanged
+
+Do you want to perform this update?
+  yes
+> no
+  details
+```
+
+Selecting `details` will reveal the two changed made above:
+
+```
+  pulumi:pulumi:Stack: (same)
+    [urn=urn:pulumi:dev::iac-workshop-apps::pulumi:pulumi:Stack::iac-workshop-apps-dev]
+    ~ kubernetes:apps/v1:Deployment: (update)
+        [id=joe-duffy/app-dep-8r1febnu]
+        [urn=urn:pulumi:dev::iac-workshop-apps::kubernetes:apps/v1:Deployment::app-dep]
+        [provider=urn:pulumi:dev::iac-workshop-apps::pulumi:providers:kubernetes::default_1_2_3::c2145624-bf5a-4e9e-97c6-199096da4c67]
+      ~ spec: {
+          ~ replicas: 1 => 3
+          ~ template: {
+              ~ spec: {
+                  ~ containers: [
+                      ~ [0]: {
+                              ~ image: "gcr.io/google-samples/kubernetes-bootcamp:v1" => "jocatalin/kubernetes-bootcamp:v2"
+                            }
+                    ]
+                }
+            }
+        }
+
+Do you want to perform this update?
+  yes
+> no
+  details
+```
+
+And selecting `yes` will apply them:
 
 ```
 Updating (dev):
 
-     Type                                Name                   Status       Info
-     pulumi:pulumi:Stack                 iac-workshop-dev
-     ├─ aws:apigateway:x:API             site
- +   │  ├─ aws:iam:Role                  site4c238266           created
- +   │  ├─ aws:iam:RolePolicyAttachment  site4c238266-32be53a2  created
- +   │  ├─ aws:lambda:Function           site4c238266           created
- ~   │  ├─ aws:apigateway:RestApi        site                   updated      [diff: ~body]
- +-  │  ├─ aws:apigateway:Deployment     site                   replaced     [diff: ~variables]
- +-  │  ├─ aws:lambda:Permission         site-fa520765          replaced     [diff: ~function]
- ~   │  └─ aws:apigateway:Stage          site                   updated      [diff: ~deployment]
- -   ├─ aws:lambda:Function              get-handler            deleted
- -   ├─ aws:iam:RolePolicy               handler-policy         deleted
- -   └─ aws:iam:Role                     handler-role           deleted
+     Type                           Name              Status      Info
+     pulumi:pulumi:Stack            iac-workshop-apps-dev
+ ~   └─ kubernetes:apps:Deployment  app-dep           updated     [diff: ~spec]
 
 Outputs:
-    url: "https://nnr5b2m5h5.execute-api.eu-central-1.amazonaws.com/stage/"
+    url: "http://ae33950ecf82111e9962d024411cd1af-422878052.eu-central-1.elb.amazonaws.com:80"
 
 Resources:
-    + 3 created
-    ~ 2 updated
-    - 3 deleted
-    +-2 replaced
-    10 changes. 3 unchanged
+    ~ 1 updated
+    3 unchanged
 
-Duration: 25s
+Duration: 16s
 
-Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/2
+Permalink: https://app.pulumi.com/joeduffy/iac-workshop-apps/dev/updates/2
 ```
 
-Now, curl the endpoint a few more times:
+Query the pods again using your chosen namespace from earlier:
 
 ```bash
-for i in {1..5}; do curl $(pulumi stack output url); done
+kubectl get pods --namespace joe-duffy
 ```
 
-Notice that the counter increases:
+Check that there are now three:
 
 ```
-<h1>Welcome to ACMECorp!</h1>
-<p>6 hits.</p>
-<h1>Welcome to ACMECorp!</h1>
-<p>7 hits.</p>
-<h1>Welcome to ACMECorp!</h1>
-<p>8 hits.</p>
-<h1>Welcome to ACMECorp!</h1>
-<p>9 hits.</p>
-<h1>Welcome to ACMECorp!</h1>
-<p>10 hits.</p>
+NAME                               READY   STATUS    RESTARTS   AGE
+app-dep-8r1febnu-6cd57d964-c76rx   1/1     Running   0          8m45s
+app-dep-8r1febnu-6cd57d964-rdpn6   1/1     Running   0          8m35s
+app-dep-8r1febnu-6cd57d964-tj6m4   1/1     Running   0          8m56s
 ```
 
-Because we reused the same table from the prior update, the counter has continued where the prior commands left off.
+Finally, curl the endpoint again:
 
-> :white_check_mark: After completing this step, your `index.ts` file should [look like this](./code/step6.ts).
+```bash
+curl $(pulumi stack output url)
+```
+
+And verify that the output now ends in `v=2`, instead of `v=1` (the result of the new container image):
+
+```
+Hello Kubernetes bootcamp! | Running on: app-dep-8r1febnu-6cd57d964-c76rx | v=2
+```
+
+If you'd like, do it a few more times, and observe that traffic will be load balanced across the three pods:
+
+```bash
+for i in {0..10}; do curl $(pulumi stack output url); done
+```
 
 ## Step 7 &mdash; Destroy Everything
 
@@ -323,13 +332,6 @@ pulumi stack rm
 
 ## Next Steps
 
-Congratulations! :tada: You have successfully created a modern serverless application that uses API Gateway and Lambda
-for compute &mdash; resulting in dynamic pay-per-use infrastructure &mdash; with DynamoDB NoSQL storage on the backend to track of hit counts.
+Congratulations! :tada: You've deployed a Kubernetes application to an existing EKS cluster, scaled it out, and performed a rolling update of the container image it is running.
 
-Next, choose amongst these labs:
-
-* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../lab-03/README.md)
-* [Deploying Containers to a Kubernetes Cluster](../lab-04/README.md)
-* [Using AWS Lambda for Serverless Application Patterns](../lab-05/README.md)
-
-Or view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.
+Next, view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.
