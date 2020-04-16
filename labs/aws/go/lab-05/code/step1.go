@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+
 	"github.com/pulumi/pulumi-kubernetes/sdk/go/kubernetes/providers"
 	"github.com/pulumi/pulumi/sdk/go/pulumi"
 	"github.com/pulumi/pulumi/sdk/go/pulumi/config"
@@ -12,11 +14,15 @@ func main() {
 		stackRef := c.Require("clusterStackRef")
 		infra, err := pulumi.NewStackReference(ctx, stackRef, nil)
 
-		kcOutput := infra.GetOutput(pulumi.String("kubeconfig"))
-		kubeconfig := kcOutput.ApplyString(func(kc interface{}) string {
-			return kc.(string)
-		})
-
+		kubeconfig := infra.GetOutput(pulumi.String("kubeconfig")).ApplyString(
+			func(in interface{}) string {
+				kc, err := json.Marshal(in)
+				if err != nil {
+					panic(err)
+				}
+				return string(kc)
+			},
+		)
 		k8sProvider, err := providers.NewProvider(ctx, "k8sprovider", &providers.ProviderArgs{
 			Kubeconfig: kubeconfig,
 		})

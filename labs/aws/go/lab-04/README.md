@@ -248,22 +248,22 @@ following to your `main.go`:
 
 ```go
 // Create the KubeConfig Structure as per https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
-func generateKubeconfig(clusterEndpoint pulumi.StringOutput, certData pulumi.StringOutput, clusterName pulumi.StringOutput) pulumi.StringOutput {
-	return pulumi.Sprintf(`{
+func generateKubeconfig(clusterEndpoint pulumi.StringOutput, certData pulumi.StringOutput, clusterName pulumi.StringOutput) pulumi.Output {
+	data := pulumi.Sprintf(`{
         "apiVersion": "v1",
         "clusters": [{
             "cluster": {
                 "server": "%s",
                 "certificate-authority-data": "%s"
             },
-            "name": "kubernetes",
+            "name": "kubernetes"
         }],
         "contexts": [{
             "context": {
                 "cluster": "kubernetes",
-                "user": "aws",
+                "user": "aws"
             },
-            "name": "aws",
+            "name": "aws"
         }],
         "current-context": "aws",
         "kind": "Config",
@@ -276,12 +276,21 @@ func generateKubeconfig(clusterEndpoint pulumi.StringOutput, certData pulumi.Str
                     "args": [
                         "token",
                         "-i",
-                        "%s",
-                    ],
-                },
-            },
-        }],
+                        "%s"
+                    ]
+                }
+            }
+        }]
     }`, clusterEndpoint, certData, clusterName)
+
+	return data.ApplyT(func(in interface{}) map[string]interface{} {
+		d := []byte(in.(string))
+		var kc map[string]interface{}
+		if err := json.Unmarshal(d, &kc); err != nil {
+			panic(err)
+		}
+		return kc
+	}).(pulumi.Output)
 }
 ```
 
