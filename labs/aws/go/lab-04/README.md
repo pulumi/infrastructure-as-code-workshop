@@ -1,165 +1,320 @@
-# Deploying Containers to a Kubernetes Cluster
+# Deploying a Kubernetes Cluster
 
-In this lab, you will deploy a containerized application to a Kubernetes cluster.
+In this lab, you will deploy a Kubernetes cluster in EKS.
 
-> This lab assumes you have a project set up. If you don't yet, please [complete this lab first](../01-iac/01-creating-a-new-project.md).
+> This lab assumes you have a project set up. If you don't yet, please [complete this lab first](../lab-01/01-creating-a-new-project.md).
 
-## Step 1 &mdash; Creating a Kubernetes Cluster
+## Step 1 &mdash; Install the Pulumi and AWS Package
 
-> If you do not have an EKS cluster, you can create one by using the code [here](./code/step1.go).
-
-If you have created your EKS Cluster using Pulumi, then you can export your KubeConfig as follows:
-
-```bash
-pulumi stack output kubeconfig > ~/iac-workshop/kubeconfig.json
-```
-
-Point the `KUBECONFIG` environment variable at your cluster configuration file:
-
-```bash
-export KUBECONFIG=~/iac-workshop/kubeconfig
-```
-
-To test out connectivity, run `kubectl cluster-info`. You should see information similar to this:
+From your project's root directory, install the packages:
 
 ```
-Kubernetes master is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com
-CoreDNS is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+GO111MODULE=on go get github.com/pulumi/pulumi github.com/pulumi/pulumi-aws
 ```
 
-## Step 2 &mdash; Install the Kubernetes Package
-
-From your project's root directory, install the Kubernetes package:
-
-```
-GO111MODULE=on go get github.com/pulumi/pulumi-kubernetes
-```
-
-Next, add these imports to your `main.go` file:
+Next, add these imports to your `main.go` file and create the `main` function:
 
 ```go
-appsv1 "github.com/pulumi/pulumi-kubernetes/sdk/go/kubernetes/apps/v1"
-corev1 "github.com/pulumi/pulumi-kubernetes/sdk/go/kubernetes/core/v1"
-metav1 "github.com/pulumi/pulumi-kubernetes/sdk/go/kubernetes/meta/v1"
-```
+package main
 
-We need to declare a new Kubernetes Provider based on the KubeConfig created in step1. To do this, add this to your `main.go` file
+import (
+    "fmt"
+	"github.com/pulumi/pulumi-aws/sdk/go/aws/iam"
+	"github.com/pulumi/pulumi/sdk/go/pulumi"
+)
 
-```go
-k8sProvider, err := providers.NewProvider(ctx, "k8sprovider", &providers.ProviderArgs{
-    Kubeconfig: generateKubeconfig(eksCluster.Endpoint,
-        eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name),
-}, pulumi.DependsOn([]pulumi.Resource{nodeGroup}))
-if err != nil {
-    return err
+func main() {
 }
+```
+
+> :white_check_mark: After this change, your `main.go` should [look like this](./code/step1.go).
+
+## Step 2 &mdash; Create the Cluster and Node IAM Roles
+
+We need to create IAM roles for the cluster to work with EKS, and for the node
+groups to join the cluster.
+
+Start with the cluster service role by adding this to your `main.go` file in
+the `main` function:
+
+```go
+func main() {
+    pulumi.Run(func(ctx *pulumi.Context) error {
+        eksRole, err := iam.NewRole(ctx, "eks-iam-eksRole", &iam.RoleArgs{
+            AssumeRolePolicy: pulumi.String(`{
+		    "Version": "2008-10-17",
+		    "Statement": [{
+		        "Sid": "",
+		        "Effect": "Allow",
+		        "Principal": {
+		            "Service": "eks.amazonaws.com"
+		        },
+		        "Action": "sts:AssumeRole"
+		    }]
+		}`),
+        })
+        if err != nil {
+            return err
+        }
+        eksPolicies := []string{
+            "arn:aws:iam::aws:policy/AmazonEKSServicePolicy",
+            "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
+        }
+        for i, eksPolicy := range eksPolicies {
+            _, err := iam.NewRolePolicyAttachment(ctx, fmt.Sprintf("rpa-%d", i), &iam.RolePolicyAttachmentArgs{
+                PolicyArn: pulumi.String(eksPolicy),
+                Role:      eksRole.Name,
+            })
+            if err != nil {
+                return err
+            }
+        }
+    }
+}
+```
+
+
+Next, let's create the nodegroup role by appending this to the `main` function:
+
+```go
+...
+    // Create the EC2 NodeGroup Role
+    nodeGroupRole, err := iam.NewRole(ctx, "nodegroup-iam-role", &iam.RoleArgs{
+        AssumeRolePolicy: pulumi.String(`{
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Sid": "",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "ec2.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }]
+    }`),
+    })
+    if err != nil {
+        return err
+    }
+    nodeGroupPolicies := []string{
+        "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+        "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+        "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
+    }
+    for i, nodeGroupPolicy := range nodeGroupPolicies {
+        _, err := iam.NewRolePolicyAttachment(ctx, fmt.Sprintf("ngpa-%d", i), &iam.RolePolicyAttachmentArgs{
+            Role:      nodeGroupRole.Name,
+            PolicyArn: pulumi.String(nodeGroupPolicy),
+        })
+        if err != nil {
+            return err
+        }
+    }
 ```
 
 > :white_check_mark: After this change, your `main.go` should [look like this](./code/step2.go).
 
-## Step 3 &mdash; Declare Your Application's Namespace Object
+## Step 3 &mdash; Configure the Networking
 
-First, declare a [namespace object](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/). This will scope your objects to a name of your choosing, so that in this workshop you won't accidentally interfere with other participants.
+We'll need to provide a VPC for the cluster to use, with the appropriate
+security groups. The security groups will be configured to allow external
+internet access, and HTTP ingress for a container application in the next lab.
 
-Append this to your `main.go` file, replacing `joe-duffy` with your own name and referencing the Provider created in step2:
+First, add this import to your `main.go` file:
 
 ```go
-namespace, err := corev1.NewNamespace(ctx, "app-ns", &corev1.NamespaceArgs{
-    Metadata: &metav1.ObjectMetaArgs{
-        Name: pulumi.String("joe-duffy"),
-    },
-}, pulumi.Provider(k8sProvider))
-if err != nil {
-    return err
-}
+"github.com/pulumi/pulumi-aws/sdk/go/aws/ec2"
+```
+
+Next, append this to the `main` function:
+
+```go
+...
+    // Read back the default VPC and public subnets, which we will use.
+    t := true
+    vpc, err := ec2.LookupVpc(ctx, &ec2.LookupVpcArgs{Default: &t})
+    if err != nil {
+        return err
+    }
+    subnet, err := ec2.GetSubnetIds(ctx, &ec2.GetSubnetIdsArgs{VpcId: vpc.Id})
+    if err != nil {
+        return err
+    }
+    // Create a Security Group that we can use to actually connect to our cluster
+    clusterSg, err := ec2.NewSecurityGroup(ctx, "cluster-sg", &ec2.SecurityGroupArgs{
+        VpcId: pulumi.String(vpc.Id),
+        Egress: ec2.SecurityGroupEgressArray{
+            ec2.SecurityGroupEgressArgs{
+                Protocol:   pulumi.String("-1"),
+                FromPort:   pulumi.Int(0),
+                ToPort:     pulumi.Int(0),
+                CidrBlocks: pulumi.StringArray{pulumi.String("0.0.0.0/0")},
+            },
+        },
+        Ingress: ec2.SecurityGroupIngressArray{
+            ec2.SecurityGroupIngressArgs{
+                Protocol:   pulumi.String("tcp"),
+                FromPort:   pulumi.Int(80),
+                ToPort:     pulumi.Int(80),
+                CidrBlocks: pulumi.StringArray{pulumi.String("0.0.0.0/0")},
+            },
+        },
+    })
+    if err != nil {
+        return err
+    }
 ```
 
 > :white_check_mark: After this change, your `main.go` should [look like this](./code/step3.go).
 
-## Step 4 &mdash; Declare Your Application's Deployment Object
+## Step 4 &mdash; Create the Cluster
 
-You'll now declare a [deployment object](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), which deploys a specific set of containers to the cluster and scales them. In this case, you'll deploy the pre-built `gcr.io/google-samples/kubernetes-bootcamp:v1` container image with only a single replica.
-
-Append this to your `main.go` file:
+First, add this import to your `main.go` file:
 
 ```go
-appLabels := pulumi.StringMap{
-    "app": pulumi.String("iac-workshop"),
+"github.com/pulumi/pulumi-aws/sdk/go/aws/eks"
+```
+
+Now lets add a helper function to work with Pulumi `StringArrays` by adding
+this to your `main.go`
+
+```go
+func toPulumiStringArray(a []string) pulumi.StringArrayInput {
+	var res []pulumi.StringInput
+	for _, s := range a {
+		res = append(res, pulumi.String(s))
+	}
+	return pulumi.StringArray(res)
 }
-_, err = appsv1.NewDeployment(ctx, "app-dep", &appsv1.DeploymentArgs{
-    Metadata: &metav1.ObjectMetaArgs{
-        Namespace: namespace.Metadata.Elem().Name(),
-    },
-    Spec: appsv1.DeploymentSpecArgs{
-        Selector: &metav1.LabelSelectorArgs{
-            MatchLabels: appLabels,
-        },
-        Replicas: pulumi.Int(3),
-        Template: &corev1.PodTemplateSpecArgs{
-            Metadata: &metav1.ObjectMetaArgs{
-                Labels: appLabels,
+```
+
+Next, add the following to your `main` function to define the EKS cluster to create,
+using its IAM role and networking setup.
+
+```go
+...
+    // Create EKS Cluster
+    eksCluster, err := eks.NewCluster(ctx, "eks-cluster", &eks.ClusterArgs{
+        RoleArn: pulumi.StringInput(eksRole.Arn),
+        VpcConfig: &eks.ClusterVpcConfigArgs{
+            PublicAccessCidrs: pulumi.StringArray{
+                pulumi.String("0.0.0.0/0"),
             },
-            Spec: &corev1.PodSpecArgs{
-                Containers: corev1.ContainerArray{
-                    corev1.ContainerArgs{
-                        Name:  pulumi.String("iac-workshop"),
-                        Image: pulumi.String("jocatalin/kubernetes-bootcamp:v2"),
-                    }},
+            SecurityGroupIds: pulumi.StringArray{
+                clusterSg.ID().ToStringOutput(),
             },
+            SubnetIds: toPulumiStringArray(subnet.Ids),
         },
-    },
-}, pulumi.Provider(k8sProvider))
-if err != nil {
-    return err
-}
-)
+    })
+    if err != nil {
+        return err
+    }
 ```
 
 > :white_check_mark: After this change, your `main.go` should [look like this](./code/step4.go).
 
-## Step 5 &mdash; Declare Your Application's Service Object
+## Step 5 &mdash; Create the NodeGroup
 
-Next, you'll declare a [service object](https://kubernetes.io/docs/concepts/services-networking/service/), which enables networking and load balancing across your deployment replicas.
-
-Append this to your `main.go` file:
+Add the following to your `main` function to define the nodegroup to create, and 
+attach to the cluster using its IAM role and networking setup.
 
 ```go
-service, err := corev1.NewService(ctx, "app-service", &corev1.ServiceArgs{
-    Metadata: &metav1.ObjectMetaArgs{
-        Namespace: namespace.Metadata.Elem().Name(),
-        Labels:    appLabels,
-    },
-    Spec: &corev1.ServiceSpecArgs{
-        Ports: corev1.ServicePortArray{
-            corev1.ServicePortArgs{
-                Port:       pulumi.Int(80),
-                TargetPort: pulumi.Int(8080),
-            },
+...
+    // Create the NodeGroup.
+    _, err = eks.NewNodeGroup(ctx, "node-group-2", &eks.NodeGroupArgs{
+        ClusterName:   eksCluster.Name,
+        NodeGroupName: pulumi.String("demo-eks-nodegroup-2"),
+        NodeRoleArn:   pulumi.StringInput(nodeGroupRole.Arn),
+        SubnetIds:     toPulumiStringArray(subnet.Ids),
+        ScalingConfig: &eks.NodeGroupScalingConfigArgs{
+            DesiredSize: pulumi.Int(2),
+            MaxSize:     pulumi.Int(2),
+            MinSize:     pulumi.Int(1),
         },
-        Selector: appLabels,
-        Type:     pulumi.String("LoadBalancer"),
-    },
-}, pulumi.Provider(k8sProvider))
-if err != nil {
-    return err
+    })
+    if err != nil {
+        return err
+    }
+```
+
+> :white_check_mark: After this change, your `main.go` should [look like this](./code/step5.go).
+
+## Step 6 &mdash; Generate the kubeconfig
+
+We'll need to create a kubeconfig per the [EKS guides](https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html )
+that uses the cluster's properties.
+
+First, we'll add a helper function to generate the kubeconfig by adding the
+following to your `main.go`:
+
+```go
+// Create the KubeConfig Structure as per https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
+func generateKubeconfig(clusterEndpoint pulumi.StringOutput, certData pulumi.StringOutput, clusterName pulumi.StringOutput) pulumi.StringOutput {
+	return pulumi.Sprintf(`{
+        "apiVersion": "v1",
+        "clusters": [{
+            "cluster": {
+                "server": "%s",
+                "certificate-authority-data": "%s"
+            },
+            "name": "kubernetes",
+        }],
+        "contexts": [{
+            "context": {
+                "cluster": "kubernetes",
+                "user": "aws",
+            },
+            "name": "aws",
+        }],
+        "current-context": "aws",
+        "kind": "Config",
+        "users": [{
+            "name": "aws",
+            "user": {
+                "exec": {
+                    "apiVersion": "client.authentication.k8s.io/v1alpha1",
+                    "command": "aws-iam-authenticator",
+                    "args": [
+                        "token",
+                        "-i",
+                        "%s",
+                    ],
+                },
+            },
+        }],
+    }`, clusterEndpoint, certData, clusterName)
 }
 ```
 
-Afterwards, add these lines to export the resulting, dynamically assigned endpoint for the resulting load balancer:
+Next, add the following to your `main` function to create and export the
+kubeconfig.
 
 ```go
-ctx.Export("url", service.Status.ApplyT(func(status *corev1.ServiceStatus) *string {
-    ingress := status.LoadBalancer.Ingress[0]
-    if ingress.Hostname != nil {
-        return ingress.Hostname
-    }
-    return ingress.Ip
-}))
+...
+    ctx.Export("kubeconfig", generateKubeconfig(eksCluster.Endpoint,
+        eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name))
+
+    return nil
 ```
 
-> :white_check_mark: After these changes, your `main.go` should [look like this](./code/step5.go).
+> :white_check_mark: After this change, your `main.go` should [look like this](./code/step6.go).
 
-## Step  &mdash; Deploy Everything
+## Step 7 &mdash; Deploy Everything
+
+First, get the vendored modules.
+
+If working within your `$GOPATH`:
+
+```bash
+go mod init
+```
+
+If **not** working within your `$GOPATH`:
+
+```bash
+go mod init <module_path>     // e.g. github.com/joe-duffy/iac-workshop-apps
+```
+
+Deploy everything:
 
 ```bash
 pulumi up
@@ -171,7 +326,7 @@ This will show you a preview and, after selecting `yes`, the application will be
 Updating (dev):
 
      Type                             Name                                    Status
- +   pulumi:pulumi:Stack              python-testing-dev                      created
+ +   pulumi:pulumi:Stack              iac-workshop-cluster                    created
  +   ├─ aws:iam:Role                  eks-nodegroup-role                      created
  +   ├─ aws:iam:Role                  eks-service-role                        created
  +   ├─ aws:iam:RolePolicyAttachment  eks-service-role-4b490823               created
@@ -184,167 +339,61 @@ Updating (dev):
  +   ├─ aws:eks:Cluster               eks-cluster                             created
  +   ├─ aws:eks:NodeGroup             eks-node-group                          created
  +   ├─ pulumi:providers:kubernetes   k8s-provider                            created
- +   ├─ kubernetes:core:Namespace     app-ns                                  created
- +   ├─ kubernetes:core:Service       app-service                             created
- +   └─ kubernetes:apps:Deployment    app-dep                                 created
 
 Outputs:
-    url: "http://ae7c37b7c510511eab4540a6f2211784-521581596.us-west-2.elb.amazonaws.com:80"
+	kubeconfig: "{\"apiVersion\": \"v1\", \"clusters\": ...}" 
 
 Resources:
     + 16 created
 
 Duration: 12m50s
 
-Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/1
+Permalink: https://app.pulumi.com/joeduffy/iac-workshop-cluster/dev/updates/1
 ```
 
-List the pods in your namespace, again replacing `joe-duffy` with the namespace you chose earlier:
+## Step 8 &mdash; Testing Cluster Access
+
+Extract the kubeconfig from the stack output and point the `KUBECONFIG`
+environment variable at your cluster configuration file:
 
 ```bash
-kubectl get pods --namespace joe-duffy
+pulumi stack output kubeconfig > kubeconfig.json
+export KUBECONFIG=$PWD/kubeconfig.json
 ```
 
-And you should see a single replica:
+To test out connectivity, run `kubectl cluster-info`. You should see information similar to this:
 
 ```
-NAME                                READY   STATUS    RESTARTS   AGE
-app-dep-8r1febnu-66bffbf565-vx9kv   1/1     Running   0          0m15s
+Kubernetes master is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com
+CoreDNS is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 ```
 
-Curl the resulting endpoint to view the application:
+Check the nodes and pods:
 
 ```bash
-curl $(pulumi stack output url)
-```
-
-You should see something like the following:
-
-```
-Hello Kubernetes bootcamp! | Running on: app-dep-8r1febnu-66bffbf565-vx9kv | v=1
-```
-
-> Kubernetes does not wait until the AWS load balancer is fully initialized, so it may take a few minutes before it becomes available.
-
-## Step 7 &mdash; Update Your Application Configuration
-
-Next, you'll make two changes to the application:
-
-* Scale out to 3 replicas, instead of just 1.
-
-Update your deployment's configuration's replica count:
-
-```
-...
-        Replicas: pulumi.Int(3),
-...
-```
-
-> :white_check_mark: After this change, your `main.go` should [look like this](./code/step7.go).
-
-Deploy your updates:
-
-```bash
-pulumi up
-```
-
-This will show you that the deployment has changed:
-
-```
-Previewing update (dev):
-
-     Type                           Name              Plan       Info
-     pulumi:pulumi:Stack            iac-workshop-dev
- ~   └─ kubernetes:apps:Deployment  app-dep           update     [diff: ~spec]
-
-Resources:
-    ~ 1 to update
-    3 unchanged
-
-Do you want to perform this update?
-  yes
-> no
-  details
-```
-
-Selecting `details` will reveal the two changed made above:
-
-```
-  pulumi:pulumi:Stack: (same)
-    [urn=urn:pulumi:dev::iac-workshop::pulumi:pulumi:Stack::iac-workshop-dev]
-    ~ kubernetes:apps/v1:Deployment: (update)
-        [id=joe-duffy/app-dep-8r1febnu]
-        [urn=urn:pulumi:dev::iac-workshop::kubernetes:apps/v1:Deployment::app-dep]
-        [provider=urn:pulumi:dev::iac-workshop::pulumi:providers:kubernetes::default_1_2_3::c2145624-bf5a-4e9e-97c6-199096da4c67]
-      ~ spec: {
-          ~ replicas: 1 => 3
-        }
-
-Do you want to perform this update?
-  yes
-> no
-  details
-```
-
-And selecting `yes` will apply them:
-
-```
-Updating (dev):
-
-     Type                           Name              Status      Info
-     pulumi:pulumi:Stack            iac-workshop-dev
- ~   └─ kubernetes:apps:Deployment  app-dep           updated     [diff: ~spec]
-
-Outputs:
-    url: "http://ae33950ecf82111e9962d024411cd1af-422878052.eu-central-1.elb.amazonaws.com:80"
-
-Resources:
-    ~ 1 updated
-    3 unchanged
-
-Duration: 16s
-
-Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/2
-```
-
-Query the pods again using your chosen namespace from earlier:
-
-```bash
-kubectl get pods --namespace joe-duffy
-```
-
-Check that there are now three:
-
-```
-NAME                               READY   STATUS    RESTARTS   AGE
-app-dep-8r1febnu-6cd57d964-c76rx   1/1     Running   0          8m45s
-app-dep-8r1febnu-6cd57d964-rdpn6   1/1     Running   0          8m35s
-app-dep-8r1febnu-6cd57d964-tj6m4   1/1     Running   0          8m56s
-```
-
-Finally, curl the endpoint again:
-
-```bash
-curl $(pulumi stack output url)
-```
-
-If you'd like, do it a few more times, and observe that traffic will be load balanced across the three pods:
-
-```bash
-for i in {0..10}; do curl $(pulumi stack output url); done
-```
-
-## Step 8 &mdash; Destroy Everything
-
-Finally, destroy the resources and the stack itself:
-
-```
-pulumi destroy
-pulumi stack rm
+kubectl get nodes -o wide --show-labels
+kubectl get pods -A -o wide
 ```
 
 ## Next Steps
 
-Congratulations! :tada: You've deployed a Kubernetes application to an existing EKS cluster, scaled it out, and performed a rolling update of the container image it is running.
+Congratulations! :tada: You've deployed a Kubernetes EKS cluster.
 
-Next, view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.
+Next, check out the [next lab](../lab-05/README.md) to deploy and work with container based applications.
+
+Note: you'll need to make a note of the stack's Pulumi path to reference it in
+the next lab.
+
+This is a string in the format: `<organization_or_user>/<projectName>/<stackName>`.
+
+You can find the full string by running and extracting the path:
+
+```bash
+pulumi stack ls
+
+NAME  LAST UPDATE     RESOURCE COUNT  URL
+dev*  45 minutes ago  15              https://app.pulumi.com/joeduffy/iac-workshop-cluster/dev
+```
+
+The stack reference string is `joeduffy/iac-workshop-cluster/dev` from the output
+above.
