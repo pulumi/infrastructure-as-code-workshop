@@ -1,48 +1,36 @@
-import * as AWS from "aws-sdk";
-import * as aws from "@pulumi/aws";
-import * as awsx from "@pulumi/awsx";
+import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-const hits = new aws.dynamodb.Table("hits", {
-    attributes: [{ name: "Site", type: "S" }],
-    hashKey: "Site",
-    billingMode: "PAY_PER_REQUEST",
-});
+let pulumiConfig = new pulumi.Config();
 
-const handlerRole = new aws.iam.Role("handler-role", {
-    assumeRolePolicy: {
-        Version: "2012-10-17",
-        Statement: [{
-            Action: "sts:AssumeRole",
-            Principal: {
-                Service: "lambda.amazonaws.com"
+// Existing Pulumi stack reference in the format:
+// <organization>/<project>/<stack> e.g. "myUser/myProject/dev"
+const clusterStackRef = new pulumi.StackReference(pulumiConfig.require("clusterStackRef"));
+
+// Get the kubeconfig from the cluster stack output.
+const kubeconfig = clusterStackRef.getOutput("kubeconfig").apply(JSON.stringify);
+
+// Create the k8s provider with the kubeconfig.
+const provider = new k8s.Provider("k8sProvider", {kubeconfig});
+
+const ns = new k8s.core.v1.Namespace("app-ns", {
+    metadata: { name: "joe-duffy" },
+}, {provider});
+
+const appLabels = { app: "iac-workshop" };
+const deployment = new k8s.apps.v1.Deployment("app-dep", {
+    metadata: { namespace: ns.metadata.name },
+    spec: {
+        selector: { matchLabels: appLabels },
+        replicas: 1,
+        template: {
+            metadata: { labels: appLabels },
+            spec: {
+                containers: [{
+                    name: "iac-workshop",
+                    image: "gcr.io/google-samples/kubernetes-bootcamp:v1",
+                }],
             },
-            Effect: "Allow",
-            Sid: "",
-        }],
+        },
     },
-});
-
-const handlerPolicy = new aws.iam.RolePolicy("handler-policy", {
-    role: handlerRole,
-    policy: hits.arn.apply(arn => JSON.stringify({
-        Version: "2012-10-17",
-        Statement: [
-            {
-                Action: [
-                    "dynamodb:UpdateItem",
-                    "dynamodb:PutItem",
-                    "dynamodb:GetItem",
-                    "dynamodb:DescribeTable",
-                ],
-                Resource: arn,
-                Effect: "Allow",
-            },
-            {
-                Action: ["logs:*", "cloudwatch:*"],
-                Resource: "*",
-                Effect: "Allow",
-            },
-        ],
-    })),
-});
+}, {provider});

@@ -1,6 +1,9 @@
-import * as k8s from "@pulumi/kubernetes";
-import * as pulumi from "@pulumi/pulumi";
+import * as eks from "@pulumi/eks"
 
-const ns = new k8s.core.v1.Namespace("app-ns", {
-    metadata: { name: "joe-duffy" },
+// Create an EKS cluster with the default VPC, and default node group with 
+// two t2.medium node instances.
+const cluster = new eks.Cluster("eks", {
+    deployDashboard: false,
 });
+
+export const kubeconfig = cluster.kubeconfig;
