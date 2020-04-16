@@ -9,4 +9,5 @@ infra = StackReference(f"{stackRef}")
 
 # Declare a provider using the KubeConfig we created
 # This will be used to interact with the EKS cluster
-k8s_provider = Provider("k8s-provider", kubeconfig=infra.get_output("kubeconfig"))
+kubeconfig = infra.get_output("kubeconfig").apply(lambda c: json.dumps(c))
+k8s_provider = Provider("k8s-provider", kubeconfig=kubeconfig)
