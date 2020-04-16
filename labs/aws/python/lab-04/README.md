@@ -175,7 +175,7 @@ that uses the cluster's properties.
 
 ```python
 def generateKubeconfig(endpoint, cert_data, cluster_name):
-    return json.dumps({
+    return {
         "apiVersion": "v1",
         "clusters": [{
             "cluster": {
@@ -207,8 +207,9 @@ def generateKubeconfig(endpoint, cert_data, cluster_name):
                 },
             },
         }],
-    })
+    }
 
+# Create the KubeConfig Structure as per https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
 kubeconfig = Output.all(cluster.endpoint, cluster.certificate_authority["data"], cluster.name).apply(lambda args: generateKubeconfig(args[0], args[1], args[2]))
 
 export("kubeconfig", kubeconfig)
