@@ -1,142 +1,222 @@
-# Deploying Containers to a Kubernetes Cluster
+# Deploying a Kubernetes Cluster
 
-In this lab, you will deploy a containerized application to a Kubernetes cluster.
+In this lab, you will deploy a Kubernetes cluster in EKS.
 
-> This lab assumes you have a project set up. If you don't yet, please [complete this lab first](../01-iac/01-creating-a-new-project.md).
+> This lab assumes you have a project set up. If you don't yet, please [complete this lab first](../lab-01/01-creating-a-new-project.md).
 
-## Step 1 &mdash; Creating a Kubernetes Cluster
+## Step 1 &mdash; Install the Pulumi and AWS Packages
 
-> If you do not have an EKS cluster, you can create one by using the code [here](./code/step1.py).
-
-Point the `KUBECONFIG` environment variable at your cluster configuration file:
+From your project's root directory, install the packages:
 
 ```bash
-export KUBECONFIG=~/iac-workshop/kubeconfig
+pip3 install pulumi pulumi-aws
 ```
 
-To test out connectivity, run `kubectl cluster-info`. You should see information similar to this:
-
-```
-Kubernetes master is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com
-CoreDNS is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
-```
-
-## Step 2 &mdash; Install the Kubernetes Package
-
-From your project's root directory, install the Kubernetes package:
-
-```
-pip3 install pulumi-kubernetes
-```
-
-Next, add these imports to your `__main__.py` file:
+Next, add these imports and variable to your `__main__.py` file:
 
 ```python
-from pulumi_kubernetes import Provider
-from pulumi_kubernetes.apps.v1 import Deployment
-from pulumi_kubernetes.core.v1 import Service, Namespace
+from pulumi import Output
+import pulumi_aws as aws
+import json, hashlib
+h = hashlib.new('sha1')
 ```
 
-We need to declare a new Kubernetes Provider based on the KubeConfig created in step1. To do this, add this to your `__main__.py` file
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step1.py).
+
+## Step 2 &mdash; Create the Cluster and Node IAM Roles
+
+We need to create IAM roles for the cluster to work with EKS, and for the node
+groups to join the cluster.
+
+Start with the cluster service role by adding this to your `__main__.py` file:
 
 ```python
-k8s_provider = Provider("k8s-provider", kubeconfig=kubeconfig)
+# Create the EKS Service Role and the correct role attachments
+service_role = aws.iam.Role("eks-service-role",
+    assume_role_policy=json.dumps({
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Sid": "",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "eks.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }]
+    })
+)
+
+service_role_managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
+    "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+]
+
+for policy in service_role_managed_policy_arns:
+    h.update(policy.encode('utf-8'))
+    role_policy_attachment = aws.iam.RolePolicyAttachment(f"eks-service-role-{h.hexdigest()[0:8]}",
+        policy_arn=policy,
+        role=service_role.name
+    )
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step2.py).
-
-## Step 3 &mdash; Declare Your Application's Namespace Object
-
-First, declare a [namespace object](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/). This will scope your objects to a name of your choosing, so that in this workshop you won't accidentally interfere with other participants.
-
-Append this to your `__main__.py` file, replacing `joe-duffy` with your own name and referencing the Provider created in step2:
+Next, let's create the nodegroup role:
 
 ```python
-# Create a Namespace object https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
-ns = Namespace("app-ns",
-    metadata={
-        "name": "joe-duffy",
-    },
-    opts=ResourceOptions(provider=k8s_provider)
+# Create the EKS NodeGroup Role and the correct role attachments
+node_group_role = aws.iam.Role("eks-nodegroup-role",
+    assume_role_policy=json.dumps({
+       "Version": "2012-10-17",
+       "Statement": [{
+           "Sid": "",
+           "Effect": "Allow",
+           "Principal": {
+               "Service": "ec2.amazonaws.com"
+           },
+           "Action": "sts:AssumeRole"
+       }]
+    })
+)
+
+nodegroup_role_managed_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+]
+
+for policy in nodegroup_role_managed_policy_arns:
+    h.update(policy.encode('utf-8'))
+    role_policy_attachment = aws.iam.RolePolicyAttachment(f"eks-nodegroup-role-{h.hexdigest()[0:8]}",
+        policy_arn=policy,
+        role=node_group_role.name
+    )
+```
+
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step2.py).
+
+## Step 3 &mdash; Configure the Networking
+
+We'll need to provide a VPC for the cluster to use, with the appropriate
+security groups. The security groups will be configured to allow external
+internet access, and HTTP ingress for a container application in the next lab.
+
+```python
+# Get the VPC and subnets to launch the EKS cluster into
+default_vpc = aws.ec2.get_vpc(default="true")
+default_vpc_subnets = aws.ec2.get_subnet_ids(vpc_id=default_vpc.id)
+
+# Create the Security Group that allows access to the cluster pods
+sg = aws.ec2.SecurityGroup("eks-cluster-security-group",
+    vpc_id=default_vpc.id,
+    revoke_rules_on_delete="true",
+    ingress=[{
+       'cidr_blocks' : ["0.0.0.0/0"],
+       'from_port' : '80',
+       'to_port' : '80',
+       'protocol' : 'tcp',
+    }]
+)
+
+sg_rule = aws.ec2.SecurityGroupRule("eks-cluster-security-group-egress-rule",
+    type="egress",
+    from_port=0,
+    to_port=0,
+    protocol="-1",
+    cidr_blocks=["0.0.0.0/0"],
+    security_group_id=sg.id
 )
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step3.py).
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step3.py).
 
-## Step 4 &mdash; Declare Your Application's Deployment Object
+## Step 4 &mdash; Create the Cluster
 
-You'll now declare a [deployment object](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), which deploys a specific set of containers to the cluster and scales them. In this case, you'll deploy the pre-built `gcr.io/google-samples/kubernetes-bootcamp:v1` container image with only a single replica.
+Add the following to your `__main__.py` to define the EKS cluster to create,
+using its IAM role and networking setup.
 
-Append this to your `__main__.py` file:
-
-```python
-...
-app_labels = {
-    "app": "iac-workshop"
-}
-app_deployment = Deployment("app-dep",
-    metadata={
-        "namespace": ns.metadata["name"]
+```
+cluster = aws.eks.Cluster("eks-cluster",
+    role_arn=service_role.arn,
+    vpc_config={
+      "security_group_ids": [sg.id],
+      "subnet_ids": default_vpc_subnets.ids,
+      "endpointPrivateAccess": "false",
+      "endpointPublicAccess": "true",
+      "publicAccessCidrs": ["0.0.0.0/0"],
     },
-    spec={
-        "selector": {
-            "match_labels": app_labels,
-        },
-        "replicas": 1,
-        "template": {
-            "metadata": {
-                "labels": app_labels,
-            },
-            "spec": {
-                "containers": [{
-                    "name": "iac-workshop",
-                    "image": "gcr.io/google-samples/kubernetes-bootcamp:v1",
-                }],
-            },
-        },
-    },
-    opts=ResourceOptions(provider=k8s_provider)
 )
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step4.ts).
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step4.py).
 
-## Step 5 &mdash; Declare Your Application's Service Object
+## Step 5 &mdash; Create the NodeGroup
 
-Next, you'll declare a [service object](https://kubernetes.io/docs/concepts/services-networking/service/), which enables networking and load balancing across your deployment replicas.
-
-Append this to your `__main__.py` file:
+Add the following to your `__main__.py` to define the nodegroup to create, and 
+attach to the cluster using its IAM role and networking setup.
 
 ```python
-...
-service = Service("app-service",
-    metadata={
-        "namespace": ns.metadata["name"],
-        "labels": app_labels
+node_group = aws.eks.NodeGroup("eks-node-group",
+    cluster_name=cluster.name,
+    node_role_arn=node_group_role.arn,
+    subnet_ids=default_vpc_subnets.ids,
+    scaling_config = {
+       "desired_size": 2,
+       "max_size": 2,
+       "min_size": 1,
     },
-    spec={
-        "ports": [{
-            "port": 80,
-            "target_port": 8080,
+)
+```
+
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step5.py).
+
+## Step 6 &mdash; Generate the kubeconfig
+
+We'll need to create a kubeconfig per the [EKS guides](https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html )
+that uses the cluster's properties.
+
+```python
+def generateKubeconfig(endpoint, cert_data, cluster_name):
+    return json.dumps({
+        "apiVersion": "v1",
+        "clusters": [{
+            "cluster": {
+                "server": f"{endpoint}",
+                "certificate-authority-data": f"{cert_data}"
+            },
+            "name": "kubernetes",
         }],
-        "selector": app_labels,
-        "type": "LoadBalancer",
-    },
-    opts=ResourceOptions(provider=k8s_provider)
-)
+        "contexts": [{
+            "context": {
+                "cluster": "kubernetes",
+                "user": "aws",
+            },
+            "name": "aws",
+        }],
+        "current-context": "aws",
+        "kind": "Config",
+        "users": [{
+            "name": "aws",
+            "user": {
+                "exec": {
+                    "apiVersion": "client.authentication.k8s.io/v1alpha1",
+                    "command": "aws-iam-authenticator",
+                    "args": [
+                        "token",
+                        "-i",
+                        f"{cluster_name}",
+                    ],
+                },
+            },
+        }],
+    })
+
+kubeconfig = Output.all(cluster.endpoint, cluster.certificate_authority["data"], cluster.name).apply(lambda args: generateKubeconfig(args[0], args[1], args[2]))
+
+export("kubeconfig", kubeconfig)
 ```
 
-Afterwards, add these lines to export the resulting, dynamically assigned endpoint for the resulting load balancer:
+> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step6.py).
 
-```python
-...
-export('url', Output.all(service.status['load_balancer']['ingress'][0]['hostname'], service.spec['ports'][0]['port'])\
-    .apply(lambda args: f"http://{args[0]}:{round(args[1])}"))
-```
-
-> :white_check_mark: After these changes, your `__main__.py` should [look like this](./code/step5.py).
-
-## Step 6 &mdash; Deploy Everything
+## Step 7 &mdash; Deploy Everything
 
 ```bash
 pulumi up
@@ -161,193 +241,71 @@ Updating (dev):
  +   ├─ aws:eks:Cluster               eks-cluster                             created
  +   ├─ aws:eks:NodeGroup             eks-node-group                          created
  +   ├─ pulumi:providers:kubernetes   k8s-provider                            created
- +   ├─ kubernetes:core:Namespace     app-ns                                  created
- +   ├─ kubernetes:core:Service       app-service                             created
- +   └─ kubernetes:apps:Deployment    app-dep                                 created
 
 Outputs:
-    url: "http://ae7c37b7c510511eab4540a6f2211784-521581596.us-west-2.elb.amazonaws.com:80"
+	kubeconfig: "{\"apiVersion\": \"v1\", \"clusters\": ...}" 
 
 Resources:
     + 16 created
 
 Duration: 12m50s
 
-Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/1
+Permalink: https://app.pulumi.com/joeduffy/iac-workshop-cluster/dev/updates/1
 ```
 
-List the pods in your namespace, again replacing `joe-duffy` with the namespace you chose earlier:
+## Step 8 &mdash; Testing Cluster Access
+
+Extract the kubeconfig from the stack output and point the `KUBECONFIG`
+environment variable at your cluster configuration file:
 
 ```bash
-kubectl get pods --namespace joe-duffy
+pulumi stack output kubeconfig > kubeconfig.json
+export KUBECONFIG=$PWD/kubeconfig.json
 ```
 
-And you should see a single replica:
+To test out connectivity, run `kubectl cluster-info`. You should see information similar to this:
 
 ```
-NAME                                READY   STATUS    RESTARTS   AGE
-app-dep-8r1febnu-66bffbf565-vx9kv   1/1     Running   0          0m15s
+Kubernetes master is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com
+CoreDNS is running at https://abcxyz123.gr7.eu-central-1.eks.amazonaws.com/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 ```
 
-Curl the resulting endpoint to view the application:
+Check the nodes and pods:
 
 ```bash
-curl $(pulumi stack output url)
+kubectl get nodes -o wide --show-labels
+kubectl get pods -A -o wide
 ```
 
-You should see something like the following:
+## Next Steps
 
-```
-Hello Kubernetes bootcamp! | Running on: app-dep-8r1febnu-66bffbf565-vx9kv | v=1
-```
+Congratulations! :tada: You've deployed a Kubernetes EKS cluster.
 
-> Kubernetes does not wait until the AWS load balancer is fully initialized, so it may take a few minutes before it becomes available.
+Next, check out the [next lab](../lab-05/README.md) to deploy and work with container based applications.
 
-## Step 7 &mdash; Update Your Application Configuration
+Note: you'll need to make a note of the stack's Pulumi path to reference it in
+the next lab.
 
-Next, you'll make two changes to the application:
+This is a string in the format: `<organization_or_user>/<projectName>/<stackName>`.
 
-* Scale out to 3 replicas, instead of just 1.
-* Update the version of your application by changing its container image tag
-
-Note that the application says `Demo application version v0.10.0-blue` in the banner. After deploying, it will change to version `v0.10.0-green`.
-
-First update your deployment's configuration's replica count:
-
-```
-...
-        replicas=3,
-...
-```
-
-And then update its image to:
-
-```
-...
-                    image="jocatalin/kubernetes-bootcamp:v2",
-...
-```
-
-> :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step7.py).
-
-Deploy your updates:
+You can find the full string by running and extracting the path:
 
 ```bash
-pulumi up
+pulumi stack ls
+
+NAME  LAST UPDATE     RESOURCE COUNT  URL
+dev*  45 minutes ago  15              https://app.pulumi.com/joeduffy/iac-workshop-cluster/dev
 ```
 
-This will show you that the deployment has changed:
+The stack reference string is `joeduffy/iac-workshop-cluster/dev` from the output
+above.
 
-```
-Previewing update (dev):
+## Destroy Everything
 
-     Type                           Name              Plan       Info
-     pulumi:pulumi:Stack            iac-workshop-dev
- ~   └─ kubernetes:apps:Deployment  app-dep           update     [diff: ~spec]
-
-Resources:
-    ~ 1 to update
-    3 unchanged
-
-Do you want to perform this update?
-  yes
-> no
-  details
-```
-
-Selecting `details` will reveal the two changed made above:
-
-```
-  pulumi:pulumi:Stack: (same)
-    [urn=urn:pulumi:dev::iac-workshop::pulumi:pulumi:Stack::iac-workshop-dev]
-    ~ kubernetes:apps/v1:Deployment: (update)
-        [id=joe-duffy/app-dep-8r1febnu]
-        [urn=urn:pulumi:dev::iac-workshop::kubernetes:apps/v1:Deployment::app-dep]
-        [provider=urn:pulumi:dev::iac-workshop::pulumi:providers:kubernetes::default_1_2_3::c2145624-bf5a-4e9e-97c6-199096da4c67]
-      ~ spec: {
-          ~ replicas: 1 => 3
-          ~ template: {
-              ~ spec: {
-                  ~ containers: [
-                      ~ [0]: {
-                              ~ image: "gcr.io/google-samples/kubernetes-bootcamp:v1" => "jocatalin/kubernetes-bootcamp:v2"
-                            }
-                    ]
-                }
-            }
-        }
-
-Do you want to perform this update?
-  yes
-> no
-  details
-```
-
-And selecting `yes` will apply them:
-
-```
-Updating (dev):
-
-     Type                           Name              Status      Info
-     pulumi:pulumi:Stack            iac-workshop-dev
- ~   └─ kubernetes:apps:Deployment  app-dep           updated     [diff: ~spec]
-
-Outputs:
-    url: "http://ae33950ecf82111e9962d024411cd1af-422878052.eu-central-1.elb.amazonaws.com:80"
-
-Resources:
-    ~ 1 updated
-    3 unchanged
-
-Duration: 16s
-
-Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/2
-```
-
-Query the pods again using your chosen namespace from earlier:
-
-```bash
-kubectl get pods --namespace joe-duffy
-```
-
-Check that there are now three:
-
-```
-NAME                               READY   STATUS    RESTARTS   AGE
-app-dep-8r1febnu-6cd57d964-c76rx   1/1     Running   0          8m45s
-app-dep-8r1febnu-6cd57d964-rdpn6   1/1     Running   0          8m35s
-app-dep-8r1febnu-6cd57d964-tj6m4   1/1     Running   0          8m56s
-```
-
-Finally, curl the endpoint again:
-
-```bash
-curl $(pulumi stack output url)
-```
-
-And verify that the output now ends in `v=2`, instead of `v=1` (the result of the new container image):
-
-```
-Hello Kubernetes bootcamp! | Running on: app-dep-8r1febnu-6cd57d964-c76rx | v=2
-```
-
-If you'd like, do it a few more times, and observe that traffic will be load balanced across the three pods:
-
-```bash
-for i in {0..10}; do curl $(pulumi stack output url); done
-```
-
-## Step 8 &mdash; Destroy Everything
-
-Finally, destroy the resources and the stack itself:
+After completing the next steps and destroying that stack, now destroy
+the resources and the stack for the cluster:
 
 ```
 pulumi destroy
 pulumi stack rm
 ```
-
-## Next Steps
-
-Congratulations! :tada: You've deployed a Kubernetes application to an existing EKS cluster, scaled it out, and performed a rolling update of the container image it is running.
-
-Next, view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.

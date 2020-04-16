@@ -1,9 +1,6 @@
-from pulumi import export, Output, ResourceOptions
+from pulumi import export, Output
 import pulumi_aws as aws
 import json, hashlib
-from pulumi_kubernetes import Provider
-from pulumi_kubernetes.apps.v1 import Deployment
-from pulumi_kubernetes.core.v1 import Service, Namespace
 
 h = hashlib.new('sha1')
 
@@ -97,93 +94,4 @@ cluster = aws.eks.Cluster("eks-cluster",
       "endpointPublicAccess": "true",
       "publicAccessCidrs": ["0.0.0.0/0"],
     },
-)
-
-# Create Cluster NodeGroup
-node_group = aws.eks.NodeGroup("eks-node-group",
-    cluster_name=cluster.name,
-    node_role_arn=node_group_role.arn,
-    subnet_ids=default_vpc_subnets.ids,
-    scaling_config = {
-       "desired_size": 2,
-       "max_size": 2,
-       "min_size": 1,
-    },
-)
-
-def generateKubeconfig(endpoint, cert_data, cluster_name):
-    return json.dumps({
-        "apiVersion": "v1",
-        "clusters": [{
-            "cluster": {
-                "server": f"{endpoint}",
-                "certificate-authority-data": f"{cert_data}"
-            },
-            "name": "kubernetes",
-        }],
-        "contexts": [{
-            "context": {
-                "cluster": "kubernetes",
-                "user": "aws",
-            },
-            "name": "aws",
-        }],
-        "current-context": "aws",
-        "kind": "Config",
-        "users": [{
-            "name": "aws",
-            "user": {
-                "exec": {
-                    "apiVersion": "client.authentication.k8s.io/v1alpha1",
-                    "command": "aws-iam-authenticator",
-                    "args": [
-                        "token",
-                        "-i",
-                        f"{cluster_name}",
-                    ],
-                },
-            },
-        }],
-    })
-
-# Create the KubeConfig Structure as per https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
-kubeconfig = Output.all(cluster.endpoint, cluster.certificate_authority["data"], cluster.name).apply(lambda args: generateKubeconfig(args[0], args[1], args[2]))
-
-# Declare a provider using the KubeConfig we created
-# This will be used to interact with the EKS cluster
-k8s_provider = Provider("k8s-provider", kubeconfig=kubeconfig)
-
-# Create a Namespace object https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
-ns = Namespace("app-ns",
-    metadata={
-       "name": "joe-duffy",
-    },
-    opts=ResourceOptions(provider=k8s_provider)
-)
-
-app_labels = {
-    "app": "iac-workshop"
-}
-app_deployment = Deployment("app-dep",
-    metadata={
-        "namespace": ns.metadata["name"]
-    },
-    spec={
-        "selector": {
-            "match_labels": app_labels,
-        },
-        "replicas": 1,
-        "template": {
-            "metadata": {
-                "labels": app_labels,
-            },
-            "spec": {
-                "containers": [{
-                    "name": "iac-workshop",
-                    "image": "gcr.io/google-samples/kubernetes-bootcamp:v1",
-                }],
-            },
-        },
-    },
-    opts=ResourceOptions(provider=k8s_provider)
 )
