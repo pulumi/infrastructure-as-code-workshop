@@ -33,12 +33,12 @@ class MyStack : Stack
             ContainerAccessType = "private",
         });
 
-        var blob = new Azure.Storage.ZipBlob("zip", new Azure.Storage.ZipBlobArgs
+        var blob = new Azure.Storage.Blob("zip", new Azure.Storage.BlobArgs
         {
             StorageAccountName = storageAccount.Name,
             StorageContainerName = container.Name,
-            Type = "block",
-            Content = new FileArchive("./functions"),
+            Type = "Block",
+            Source = new FileArchive("./functions"),
         });
 
         var codeBlobUrl = Azure.Storage.SharedAccessSignature.SignedBlobReadUrl(blob, storageAccount);

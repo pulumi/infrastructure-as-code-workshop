@@ -31,7 +31,7 @@ It defines a locally-redundant standard Storage Account, and it is a part of the
 
 ## Step 2 &mdash; Define a Consumption Plan
 
-There are several options to deploy Azure Functions. The serverless pay-per-execution hosting plan is called *Consumption Plan*.
+There are several options to deploy Azure Functions. The serverless pay-per-execution hosting plan is called _Consumption Plan_.
 
 There’s no resource named Consumption Plan, however. The resource name is inherited from Azure App Service: Consumption is one kind of an App Service Plan. It’s the SKU property of the resource that defines the type of hosting plan.
 
@@ -126,11 +126,11 @@ Updating (dev):
 
      Type                                 Name              Status
  +   pulumi:pulumi:Stack                  iac-workshop-dev  created
- +   ├─ azure:core:ResourceGroup          my-group          created     
- +   ├─ azure:storage:Account             storage           created     
- +   ├─ azure:appservice:Plan             asp               created     
- +   └─ azure:appservice:FunctionApp      fa                created     
- 
+ +   ├─ azure:core:ResourceGroup          my-group          created
+ +   ├─ azure:storage:Account             storage           created
+ +   ├─ azure:appservice:Plan             asp               created
+ +   └─ azure:appservice:FunctionApp      fa                created
+
 Outputs:
     Endpoint: "https://fabcd0bf8a.azurewebsites.net/api/hello"
 
@@ -190,12 +190,13 @@ var container = new Azure.Storage.Container("zips", new Azure.Storage.ContainerA
     ContainerAccessType = "private",
 });
 
-var blob = new Azure.Storage.ZipBlob("zip", new Azure.Storage.ZipBlobArgs
+
+var blob = new Azure.Storage.Blob("zip", new Azure.Storage.BlobArgs
 {
     StorageAccountName = storageAccount.Name,
     StorageContainerName = container.Name,
-    Type = "block",
-    Content = new FileArchive("./functions"),
+    Type = "Block",
+    Source = new FileArchive("./functions"),
 });
 
 var codeBlobUrl = Azure.Storage.SharedAccessSignature.SignedBlobReadUrl(blob, storageAccount);
@@ -224,10 +225,10 @@ Updating (dev):
 
      Type                                      Name              Status
  +   pulumi:pulumi:Stack                       iac-workshop-dev  created
- +   ├─ azure:storage:Container       zips     created     
- +   ├─ azure:storage:ZipBlob         zip      created     
+ +   ├─ azure:storage:Container       zips     created
+ +   ├─ azure:storage:ZipBlob         zip      created
  ~   └─ azure:appservice:FunctionApp  fa       updated     [diff: ~appSettings]
- 
+
 Outputs:
     Endpoint: "https://fabcd0bf8a.azurewebsites.net/api/hello"
 
@@ -268,8 +269,8 @@ Congratulations! :tada: You have successfully created a modern serverless applic
 
 Next, choose amongst these labs:
 
-* [Deploying Containers to Azure Container Instances](../03-aci/README.md)
-* [Provisioning Virtual Machines](../04-vms/README.md)
-* [Deploying Containers to a Kubernetes Cluster](../05-kubernetes/README.md)
+- [Deploying Containers to Azure Container Instances](../03-aci/README.md)
+- [Provisioning Virtual Machines](../04-vms/README.md)
+- [Deploying Containers to a Kubernetes Cluster](../05-kubernetes/README.md)
 
 Or view the [suggested next steps](/#next-steps) after completing all labs.
