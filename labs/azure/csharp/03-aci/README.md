@@ -127,7 +127,7 @@ var registry = new Registry("registry", new RegistryArgs
 You can build and publish Docker images from within your Pulumi program. For that, install an additional NuGet package:
 
 ```bash
-dotnet add package Pulumi.Docker --version 1.2.0-preview
+dotnet add package Pulumi.Docker
 ```
 
 Now, let's add a few new files. First, `app/site/index.html`:
@@ -182,7 +182,7 @@ and add credentials for the container group to be able to access the registry:
 ...
     ImageRegistryCredentials =
     {
-        new GroupImageRegistryCredentialsArgs
+        new Pulumi.Azure.ContainerService.Inputs.GroupImageRegistryCredentialArgs
         {
             Server = registry.LoginServer,
             Username = registry.AdminUsername,
