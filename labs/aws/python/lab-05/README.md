@@ -38,7 +38,8 @@ Next, we need to declare a new Kubernetes provider based on the kubeconfig creat
 the cluster stack. To do this, add this to your `__main__.py` file
 
 ```python
-k8s_provider = Provider("k8s-provider", kubeconfig=infra.get_output("kubeconfig"))
+kubeconfig = infra.get_output("kubeconfig").apply(lambda c: json.dumps(c))
+k8s_provider = Provider("k8s-provider", kubeconfig=kubeconfig)
 ```
 
 > :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step1.py).
@@ -137,8 +138,9 @@ Afterwards, add these lines to export the resulting, dynamically assigned endpoi
 
 ```python
 ...
-export('url', Output.all(service.status['load_balancer']['ingress'][0]['hostname'], service.spec['ports'][0]['port'])\
-    .apply(lambda args: f"http://{args[0]}:{round(args[1])}"))
+hostname = service.status['load_balancer']['ingress'][0]['hostname']
+port = service.spec['ports'][0]['port'].apply(lambda p: str(int(p)))
+export('url', Output.concat("http://", hostname, ":", port))
 ```
 
 > :white_check_mark: After these changes, your `__main__.py` should [look like this](./code/step4.py).

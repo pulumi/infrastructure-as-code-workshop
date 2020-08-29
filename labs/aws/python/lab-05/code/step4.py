@@ -11,7 +11,8 @@ infra = StackReference(f"{stackRef}")
 
 # Declare a provider using the KubeConfig we created
 # This will be used to interact with the EKS cluster
-k8s_provider = Provider("k8s-provider", kubeconfig=infra.get_output("kubeconfig"))
+kubeconfig = infra.get_output("kubeconfig").apply(lambda c: json.dumps(c))
+k8s_provider = Provider("k8s-provider", kubeconfig=kubeconfig)
 
 # Create a Namespace object https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
 ns = Namespace("app-ns",
@@ -64,5 +65,6 @@ service = Service("app-service",
     opts=ResourceOptions(provider=k8s_provider)
 )
 
-export('url', Output.all(service.status['load_balancer']['ingress'][0]['hostname'], service.spec['ports'][0]['port']) \
-       .apply(lambda args: f"http://{args[0]}:{round(args[1])}"))
+hostname = service.status['load_balancer']['ingress'][0]['hostname']
+port = service.spec['ports'][0]['port'].apply(lambda p: str(int(p)))
+export('url', Output.concat("http://", hostname, ":", port))
