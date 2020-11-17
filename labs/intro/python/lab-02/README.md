@@ -141,3 +141,7 @@ and switch back to our `dev` stack:
 ```bash
 pulumi stack select dev
 ```
+
+# Next Steps
+
+* [Stack References](../lab-03/README.md)
