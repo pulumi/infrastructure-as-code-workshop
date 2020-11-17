@@ -1,37 +1,40 @@
-from pulumi import export
-import pulumi_aws as aws
+from pulumi_aws import s3
 
-ami = aws.get_ami(
-    most_recent="true",
-    owners=["137112412989"],
-    filters=[{"name":"name","values":["amzn-ami-hvm-*-x86_64-ebs"]}])
+bucket = s3.Bucket(
+    "my-website-bucket",
+    website=s3.BucketWebsiteArgs(
+        index_document="index.html",
+    ),
+)
 
-group = aws.ec2.SecurityGroup(
-    "web-secgrp",
-    description='Enable HTTP access',
-    ingress=[
-        { 'protocol': 'icmp', 'from_port': 8, 'to_port': 0, 'cidr_blocks': ['0.0.0.0/0'] },
-        { 'protocol': 'tcp', 'from_port': 80, 'to_port': 80, 'cidr_blocks': ['0.0.0.0/0'] }
-    ])
-
-ips = []
-hostnames = []
-for az in aws.get_availability_zones().names:
-    server = aws.ec2.Instance(f'web-server-{az}',
-      instance_type="t2.micro",
-      security_groups=[group.name],
-      ami=ami.id,
-      availability_zone=az,
-      user_data="""#!/bin/bash
-echo \"Hello, World -- from {}!\" > index.html
-nohup python -m SimpleHTTPServer 80 &
-""".format(az),
-      tags={
-          "Name": "web-server",
-      },
+content_dir = "www"
+for file in os.listdir(content_dir):
+    filepath = os.path.join(content_dir, file)
+    mime_type, _ = mimetypes.guess_type(filepath)
+    obj = s3.BucketObject(
+        file,
+        bucket=bucket.id,
+        source=pulumi.FileAsset(filepath),
+        content_type=mime_type,
+        opts=pulumi.ResourceOptions(parent=bucket)
     )
-    ips.append(server.public_ip)
-    hostnames.append(server.public_dns)
 
-export('ips', ips)
-export('hostnames', hostnames)
+bucket_policy = s3.BucketPolicy(
+    "my-website-bucket-policy",
+    bucket=bucket.id,
+    policy=bucket.arn.apply(
+        lambda arn:  json.dumps({
+            "Version": "2012-10-17",
+            "Statement": [{
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": [
+                    "s3:GetObject"
+                ],
+                "Resource": [
+                    f"{arn}/*"
+                ]
+            }]
+        })),
+    opts=pulumi.ResourceOptions(parent=bucket)
+)

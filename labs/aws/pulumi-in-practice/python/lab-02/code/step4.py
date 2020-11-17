@@ -1,75 +1,42 @@
-from pulumi import export
-import pulumi_aws as aws
+from pulumi_aws import s3
 
-ami = aws.get_ami(
-    most_recent="true",
-    owners=["137112412989"],
-    filters=[{"name":"name","values":["amzn-ami-hvm-*-x86_64-ebs"]}])
-
-group = aws.ec2.SecurityGroup(
-    "web-secgrp",
-    ingress=[
-        { 'protocol': 'icmp', 'from_port': 8, 'to_port': 0, 'cidr_blocks': ['0.0.0.0/0'] },
-        { 'protocol': 'tcp', 'from_port': 80, 'to_port': 80, 'cidr_blocks': ['0.0.0.0/0'] },
-    ],
-    egress=[
-        { 'protocol': 'tcp', 'from_port': 80, 'to_port': 80, 'cidr_blocks': ['0.0.0.0/0'] },
-    ]
+bucket = s3.Bucket(
+    "my-website-bucket",
+    website=s3.BucketWebsiteArgs(
+        index_document="index.html",
+    ),
 )
 
-default_vpc = aws.ec2.get_vpc(default="true")
-default_vpc_subnets = aws.ec2.get_subnet_ids(vpc_id=default_vpc.id)
-
-lb = aws.lb.LoadBalancer("external-loadbalancer",
-    internal="false",
-    security_groups=[group.id],
-    subnets=default_vpc_subnets.ids,
-    load_balancer_type="application",
-)
-
-target_group = aws.lb.TargetGroup("target-group",
-    port=80,
-    protocol="HTTP",
-    target_type="ip",
-    vpc_id=default_vpc.id
-)
-
-listener = aws.lb.Listener("listener",
-   load_balancer_arn=lb.arn,
-   port=80,
-   default_actions=[{
-       "type": "forward",
-       "target_group_arn": target_group.arn
-   }]
-)
-
-ips = []
-hostnames = []
-for az in aws.get_availability_zones().names:
-    server = aws.ec2.Instance(f'web-server-{az}',
-      instance_type="t2.micro",
-      security_groups=[group.name],
-      ami=ami.id,
-      user_data="""#!/bin/bash
-echo \"Hello, World -- from {}!\" > index.html
-nohup python -m SimpleHTTPServer 80 &
-""".format(az),
-      availability_zone=az,
-      tags={
-          "Name": "web-server",
-      },
-    )
-    ips.append(server.public_ip)
-    hostnames.append(server.public_dns)
-
-    attachment = aws.lb.TargetGroupAttachment(f'web-server-{az}',
-        target_group_arn=target_group.arn,
-        target_id=server.private_ip,
-        port=80,
+content_dir = "www"
+for file in os.listdir(content_dir):
+    filepath = os.path.join(content_dir, file)
+    mime_type, _ = mimetypes.guess_type(filepath)
+    obj = s3.BucketObject(
+        file,
+        bucket=bucket.id,
+        source=pulumi.FileAsset(filepath),
+        content_type=mime_type,
+        opts=pulumi.ResourceOptions(parent=bucket)
     )
 
-export('ips', ips)
-export('hostnames', hostnames)
-export("url", lb.dns_name)
+bucket_policy = s3.BucketPolicy(
+    "my-website-bucket-policy",
+    bucket=bucket.id,
+    policy=bucket.arn.apply(
+        lambda arn:  json.dumps({
+            "Version": "2012-10-17",
+            "Statement": [{
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": [
+                    "s3:GetObject"
+                ],
+                "Resource": [
+                    f"{arn}/*"
+                ]
+            }]
+        })),
+    opts=pulumi.ResourceOptions(parent=bucket)
+)
 
-
+pulumi.export('website_url', bucket.website_endpoint)

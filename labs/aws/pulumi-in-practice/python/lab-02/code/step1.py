@@ -1,33 +1,8 @@
-from pulumi import export
-import pulumi_aws as aws
+from pulumi_aws import s3
 
-ami = aws.get_ami(
-    most_recent="true",
-    owners=["137112412989"],
-    filters=[{"name":"name","values":["amzn-ami-hvm-*-x86_64-ebs"]}])
-
-group = aws.ec2.SecurityGroup(
-    "web-secgrp",
-    description='Enable HTTP access',
-    ingress=[
-        { 'protocol': 'icmp', 'from_port': 8, 'to_port': 0, 'cidr_blocks': ['0.0.0.0/0'] },
-        { 'protocol': 'tcp', 'from_port': 80, 'to_port': 80, 'cidr_blocks': ['0.0.0.0/0'] }
-])
-
-server = aws.ec2.Instance(
-    'web-server',
-    instance_type="t2.micro",
-    security_groups=[group.name],
-    ami=ami.id,
-    user_data="""
-#!/bin/bash
-echo "Hello, World!" > index.html
-nohup python -m SimpleHTTPServer 80 &
-    """,
-    tags={
-        "Name": "web-server",
-    },
+bucket = s3.Bucket(
+    "my-website-bucket",
+    website=s3.BucketWebsiteArgs(
+        index_document="index.html",
+    ),
 )
-
-export('ip', server.public_ip)
-export('hostname', server.public_dns)
