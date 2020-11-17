@@ -26,3 +26,9 @@ The [third lab](./lab-03/README.md) shows how to deploy a simple, python webserv
 
  - Retrieving existing resources in AWS using Pulumi's `get` methods
  - Looping over retrieved resources to deploy new resources using familiar programming methods
+
+### Lab 4 - Deploying Containers to Elastic Container Service (ECS)
+
+In this lab, you will learn about how to create and deploy container based applications to Elastic Container Service (ECS).
+
+  - You'll gain familiarity with with the AWS Elastic Container Service
