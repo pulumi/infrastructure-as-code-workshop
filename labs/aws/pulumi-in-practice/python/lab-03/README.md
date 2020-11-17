@@ -3,9 +3,6 @@
 In this lab, you'll first create a single EC2 virtual machine (VM). Afterwards, you'll scale that out to a VM per availability 
 zone in your region, and then add a load balancer to spread load across the entire fleet.
 
-> This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete parts [1](../lab-01/01-creating-a-new-project.md) 
->and [2](../lab-01/02-configuring-aws.md) of lab-01.
-
 ## Step 1 &mdash;  Declare the VM
 
 Import the AWS package in an empty `__main__.py` file:
@@ -364,16 +361,3 @@ Finally, destroy the resources and the stack itself:
 pulumi destroy
 pulumi stack rm
 ```
-
-## Next Steps
-
-Congratulations! :tada: You have stood up an EC2 VM, scaled it out across multiple availability zones, and configured a
-load balancer to spread traffic across all of your instances.
-
-Next, choose amongst these labs:
-
-* [Deploying Containers to Elastic Container Service (ECS) "Fargate"](../lab-03/README.md)
-* [Deploying Containers to a Kubernetes Cluster](../lab-04/README.md)
-* [Using AWS Lambda for Serverless Application Patterns](../lab-05/README.md)
-
-Or view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.

@@ -21,3 +21,8 @@ Once you have completed this lab, you should feel comfortable with:
  - How you can use traditional programming constructs in Pulumi
 
 ### Lab 3 - Deploying a Webserver
+
+The [third lab](./lab-03/README.md) shows how to deploy a simple, python webserver to multiple AWS regions. Once you've completed this lab, you'll feel comfortable with:
+
+ - Retrieving existing resources in AWS using Pulumi's `get` methods
+ - Looping over retrieved resources to deploy new resources using familiar programming methods
