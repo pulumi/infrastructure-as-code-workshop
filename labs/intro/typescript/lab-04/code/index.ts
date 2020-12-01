@@ -13,5 +13,9 @@ const image = new docker.Image('local-image', {
 })
 
 const container = new docker.Container('local-container', {
-    image: image.imageName,
+    image: image.baseImageName,
+    ports: [{
+        internal: 3000,
+        external: 3000,
+    }]
 })
