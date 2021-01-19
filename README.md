@@ -1,20 +1,24 @@
-# Infrastructure as Code Workshop
+# Infrastructure as Code Workshops
 
-This workshop teaches you Infrastructure as Code concepts through a series of hands-on labs. Topics covered include IaC fundamentals, in addition to application architectures and how to use IaC to create, update, and manage them.
+This repo contains workshops for getting started with Pulumi through a series of hands-on labs. The workshops are organized by cloud provider and then separated into language specific workshops.
 
-This workshop uses AWS although most concepts are applicable no matter what cloud provider you are using.
+## Introductory Workshop
 
-**Slides are available at: [InfrastructureAsCodeWorkshop.pdf](./slides/InfrastructureAsCodeWorkshop.pdf)**
+The [introductory workshop](./labs/intro) is designed to guide you through some Pulumi fundamentals. It has a related GitHub repo with a pre-built development environment [here](https://github.com/pulumi/introduction-to-pulumi).
 
-## Prerequisities
+## AWS Workshops
 
-Before proceeding, ensure your machine is ready to go:
+The AWS workshops are designed to guide you through examples of interacting with AWS using Pulumi. You can find more AWS workshops at the [AWS Workshops](https://pulumi.awsworkshop.io/) page.
+
+### Prerequisities
+
+If you want to follow along at home, you'll need to install some dependencies on your local machine.
 
 * [Installing Prerequisites](./00-installing-prerequisites.md)
 
-## Course Outline
+## In Person Workshop Outline
 
-A course can be language and cloud specific. Choose the link to the specific course you feel is applicable and you can get started
+The following is an overview of the in-person workshops and their current status:
 
 |            | TypeScript            | Python                   | Go                       | C#                       | 
 | ------     | -------               | -------                  | -------                  | -------                  |
@@ -33,9 +37,9 @@ After completing these labs, there are several topics you may want to explore.
 
 Thank you for checking out the Infrastructure as Code Workshop! More labs are on their way. Please [file an issue](https://github.com/pulumi/infrastructure-as-code-workshop/issues/new) if there are topics you'd like to see covered in the future.
 
-[1]: ./labs/aws/typescript/README.md
-[2]: ./labs/aws/python/README.md
+[1]: ./labs/aws/in-person/typescript/README.md
+[2]: ./labs/aws/in-person/python/README.md
 [3]: ./labs/azure/csharp/README.md
-[4]: ./labs/aws/go/README.md
-[5]: ./labs/aws/csharp/README.md
+[4]: ./labs/aws/in-person/go/README.md
+[5]: ./labs/aws/in-person/csharp/README.md
 [6]: ./labs/azure/python/README.md
