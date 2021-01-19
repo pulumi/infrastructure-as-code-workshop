@@ -1,71 +1,124 @@
-# Stack References
+# Lab 03 - Run a Docker Container
 
-In this lab, we'll examine how stack references work, and how they can be used to pass outputs to other stacks.
+In this lab, we'll run a Docker container we build locally
 
-## Step 1 - Export the values from `stack-1`
+## Step 1 - Create a new project
 
-In stack 1, modify your program to add an exported value:
-
-
-```python
-"""A Python Pulumi program"""
-
-import pulumi
-
-config = pulumi.Config()
-
-required_value = config.require('required_value')
-optional_value = config.get('optional_value')
-secret_value = config.require_secret('secret_value')
-exported_value = "i-am-exported"
-
-print(required_value)
-print(optional_value)
-print(secret_value)
-
-pulumi.export("exported_value", exported_value)
-```
-
-Run `pulumi up` to make sure the stack gets updated, and the value is exported.
-
-## Step 2 - Create a second stack
-
-In a new directory, create a second stack called `stack-2`
+As before, create a new project in an empty directory and call it `pulumi-docker`
 
 ```bash
-mkdir stack-2
+mkdir pulumi-docker
+cd pulumi-docker
 pulumi new python
 ```
 
-Use the defaults, and ensure you use the `dev` stack.
+## Step 2 - Create your application directory
 
-## Step 3 - Configure your stack reference
+Inside your project directory, create an application directory:
 
-Now we need to add a stack reference in stack-2
+```bash
+mkdir app
+```
+
+Inside this `app` directory should be two files. First, create a `__main__.py` which will run a very simple Python webserver
+
+```python
+import http.server
+import socketserver
+from http import HTTPStatus
+
+
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(HTTPStatus.OK)
+        self.end_headers()
+        self.wfile.write(b'Hello Lee')
+
+
+httpd = socketserver.TCPServer(('', 8000), Handler)
+httpd.serve_forever()
+```
+
+Next, create a `Dockerfile` which will be built and will include this webserver
+
+```
+FROM python:3.8.6-alpine
+
+WORKDIR /app
+
+COPY __main__.py /app
+
+CMD [ "python", "/app/__main__.py" ]
+```
+
+## Step 3 - Build your Docker Image with Pulumi
+
+Back inside your pulumi program, let's build your Docker image. Inside your `__main__.py` add the following:
 
 
 ```python
 import pulumi
+from pulumi_docker import Image, DockerBuild
 
 stack = pulumi.get_stack()
+image_tag = stack
 
-# get the Pulumi organization we're in
-# FIXME: this needs to be set to your Pulumi login
-org = 'my-org'
-
-# get a stack reference
-stack_ref = pulumi.StackReference(f"{org}/stack-1/{stack}")
-
-# retrieve a value from that stack reference
-exported_value_from_other_stack = stack_ref.get_output("exported_value")
-
-pulumi.export("exported_value", exported_value_from_other_stack)
+# build our image!
+image = Image("my-cool-image",
+              build=DockerBuild(context="app"),
+              image_name=f"my-cool-image:{image_tag}",
+              skip_push=True)
 ```
 
-Run `pulumi up`. You'll see the value gets exported from this stack now too.
+Make sure you enter your `virtualenv`
 
-These exported values are incredibly useful when using Pulumi stacks
+```bash
+source venv/bin/activate
+```
 
-# Next Steps
+And install the `pulumi_docker` provider:
 
-* [Run a Docker Image](../lab-04/README.md)
+```
+pip3 install pulumi_docker
+```
+
+You should see some output showing the pip package and the provider being installed
+
+Run `pulumi up` and it should build your docker image
+
+If you run `docker images` you should see your built container.
+
+## Step 4 - Run the container
+
+Finally, let's run your container. Update your pulumi program to add the following:
+
+```python
+import pulumi
+from pulumi_docker import Image, DockerBuild, Container, ContainerPortArgs
+
+stack = pulumi.get_stack()
+image_tag = stack
+
+# build our image!
+image = Image("my-cool-image",
+              build=DockerBuild(context="app"),
+              image_name=f"my-cool-image:{image_tag}",
+              skip_push=True)
+
+container = Container('my-running-image',
+                      image=image.image_name,
+                      ports=ContainerPortArgs(
+                          internal=8000,
+                          external=8000,
+                      ))
+
+pulumi.export("container_id", container.id)
+```
+
+Re-run your Pulumi program and your container should launch. You can verify this by looking at the docker stats for the running image:
+
+```bash
+docker stats $(pulumi stack output container_id) --no-stream
+CONTAINER ID   NAME                       CPU %     MEM USAGE / LIMIT     MEM %     NET I/O     BLOCK I/O   PIDS
+4b43bf4c92ab   my-running-image-39e5943   0.03%     10.05MiB / 1.941GiB   0.51%     946B / 0B   0B / 0B     1
+```
