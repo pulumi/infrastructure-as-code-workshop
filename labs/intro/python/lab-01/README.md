@@ -7,8 +7,8 @@ Infrastructure in Pulumi is organized into projects. Each project is a single pr
 Each Pulumi project lives in its own directory. Create one now and change into it:
 
 ```bash
-mkdir pulumi-intro
-cd pulumi-intro
+mkdir my-first-app
+cd my-first-app
 ```
 
 > Pulumi will use the directory name as your project name by default. To create an independent project, simply name the directory differently.
@@ -60,4 +60,4 @@ Feel free to explore the other files, although we won't be editing any of them b
 
 # Next Steps
 
-* [Manage Configuration](../lab-02/README.md)
+* [Create your first resource](../lab-02/README.md)

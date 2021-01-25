@@ -1,147 +1,116 @@
-# Managing Configuration in Pulumi
+# Lab 02 - Create a Docker Container
 
-Pulumi has optional and required configuration, so let's use both of these in our program.
+In this lab, we'll create our very first Pulumi resource.
 
-## Step 1 - Create a new pulumi project
+It'll be a simple Python application that runs in a Docker container. We'll run the Docker container we build locally but manage it with Infrastructure as Code using Pulumi.
 
-Create a new empty directory, and create a new pulumi project called `stack-1
+## Step 2 - Create your application directory
+
+Inside your project directory, create an application directory:
 
 ```bash
-mkdir stack-1
-pulumi new python
+mkdir app
 ```
 
-Follow the prompts, and Use the default stack name `dev`
-
-## Step 2 - Add some required configuration
-
-In your `__main__.py` add the following content
+Inside this `app` directory should be two files. First, create a `__main__.py` which will run a very simple Python webserver
 
 ```python
-"""A Python Pulumi program"""
+import http.server
+import socketserver
+from http import HTTPStatus
 
+
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(HTTPStatus.OK)
+        self.end_headers()
+        self.wfile.write(b'Hello Lee')
+
+
+httpd = socketserver.TCPServer(('', 3000), Handler)
+httpd.serve_forever()
+```
+
+Next, create a `Dockerfile` which will be built and will include this webserver
+
+```
+FROM python:3.8.6-alpine
+
+WORKDIR /app
+
+COPY __main__.py /app
+
+CMD [ "python", "/app/__main__.py" ]
+```
+
+## Step 3 - Build your Docker Image with Pulumi
+
+Back inside your pulumi program, let's build your Docker image. Inside your `__main__.py` add the following:
+
+
+```python
 import pulumi
+from pulumi_docker import Image, DockerBuild
 
-config = pulumi.Config()
+stack = pulumi.get_stack()
+image_tag = stack
 
-required_value = config.require('required_value')
+# build our image!
+image = Image("my-first-app",
+              build=DockerBuild(context="app"),
+              image_name=f"my-first-app:{image_tag}",
+              skip_push=True)
 ```
 
-Save and exit, and then run `pulumi up` on this project. You should receive an error:
+Make sure you enter your `virtualenv`
 
 ```bash
-error: Missing required configuration variable 'stack-1:required_value'
-        please set a value using the command `pulumi config set stack-1:required_value <value>`
-    error: an unhandled error occurred: Program exited with non-zero exit code: 1
+source venv/bin/activate
 ```
 
-## Step 3 - Populate the configuration
-
-Set the configuration option that is missing:
-
-```bash
-pulumi config set required_value = "i-am-required"
-```
-
-Re-run `pulumi up` and see that your pulumi program runs successfully, but there's no output.
-
-## Step 4 - Add more configuration options
-
-Now, populate your `__main__.py` with two other configuration values and use the python `print()` function to log their values
+And install the `pulumi_docker` provider:
 
 ```
-"""A Python Pulumi program"""
+pip3 install pulumi_docker
+```
 
+You should see some output showing the pip package and the provider being installed
+
+Run `pulumi up` and it should build your docker image
+
+If you run `docker images` you should see your built container.
+
+## Step 4 - Run the container
+
+Finally, let's run your container. Update your pulumi program to add the following:
+
+```python
 import pulumi
+from pulumi_docker import Image, DockerBuild, Container, ContainerPortArgs
 
-config = pulumi.Config()
+stack = pulumi.get_stack()
+image_tag = stack
 
-required_value = config.require('required_value')
-optional_value = config.get('optional_value')
-secret_value = config.require_secret('secret_value')
+# build our image!
+image = Image("my-first-app",
+              build=DockerBuild(context="app"),
+              image_name=f"my-first-app:{image_tag}",
+              skip_push=True)
 
-print(required_value)
-print(optional_value)
-print(secret_value)
+container = Container('my-first-app',
+                      image=image.base_image_name,
+                      ports=[ContainerPortArgs(
+                          internal=3000,
+                          external=3000,
+                      )])
+
+pulumi.export("container_id", container.id)
 ```
 
-Set the required secret value using the `--secret` flag, like so:
+Re-run your Pulumi program and your container should launch. You can verify this by looking at the docker stats for the running image:
 
 ```bash
-pulumi config set secret_value "i-am-secret" --secret
+docker stats $(pulumi stack output container_id) --no-stream
+CONTAINER ID   NAME                       CPU %     MEM USAGE / LIMIT     MEM %     NET I/O     BLOCK I/O   PIDS
+4b43bf4c92ab   my-first-app-39e5943   0.03%     10.05MiB / 1.941GiB   0.51%     946B / 0B   0B / 0B     1
 ```
-
-Run `pulumi up` and examine the output
-
-```bash
-pulumi up 
-Previewing update (dev)
-
-View Live: https://app.pulumi.com/jaxxstorm/stack-1/dev/previews/8262ee83-26f9-4ae4-9378-3f415cf76227
-
-     Type                 Name         Plan       Info
- +   pulumi:pulumi:Stack  stack-1-dev  create     3 messages
-
-Diagnostics:
-  pulumi:pulumi:Stack (stack-1-dev):
-    i-am-required
-    None
-    <pulumi.output.Output object at 0x10db3fe80>
-```
-
-Note that the secret output is not in plaintext in the terminal
-
-## Step 5 - Examine the stack config
-
-In your Pulumi program directory, check the content of the `Pulumi.dev.yaml` file:
-
-```yaml
-config:
-  stack-1:required_value: i-am-required
-  stack-1:secret_value:
-    secure: AAABAKFp4mnWwdZU4/j+wtcsGUeoIBUQQkzD+O/mYEYtcvNnh/YN1lNjxg==
-```
-
-## Step 6 - Create a new stack
-
-Now, initialize a new stack using the `pulumi stack init` command:
-
-```bash
-pulumi stack init prod
-```
-
-check the available stacks:
-
-```
-pulumi stack ls
-NAME   LAST UPDATE  RESOURCE COUNT  URL
-dev    n/a          n/a             https://app.pulumi.com/jaxxstorm/stack-1/dev
-prod*  n/a          n/a             https://app.pulumi.com/jaxxstorm/stack-1/prod
-```
-
-Notice the asterisk denoting the stack we're using.
-
-Now, try and run that stack with `pulumi up`:
-
-```bash
-pulumi:pulumi:Stack (stack-1-prod):
-    error: Missing required configuration variable 'stack-1:required_value'
-        please set a value using the command `pulumi config set stack-1:required_value <value>`
-    error: an unhandled error occurred: Program exited with non-zero exit code: 1
-````
-
-Our production stack does not have the configuration values. Configuration is stack dependent. We won't be using this stack, so let's delete it:
-
-```
-pulumi stack rm prod
-```
-
-and switch back to our `dev` stack:
-
-```bash
-pulumi stack select dev
-```
-
-# Next Steps
-
-* [Stack References](../lab-03/README.md)
