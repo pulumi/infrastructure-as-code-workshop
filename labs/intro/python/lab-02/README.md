@@ -40,7 +40,7 @@ error: Missing required configuration variable 'stack-1:required_value'
 Set the configuration option that is missing:
 
 ```bash
-pulumi config set required_value = "i-am-required"
+pulumi config set required_value "i-am-required"
 ```
 
 Re-run `pulumi up` and see that your pulumi program runs successfully, but there's no output.
