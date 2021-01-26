@@ -107,10 +107,10 @@ image = Image("my-cool-image",
 
 container = Container('my-running-image',
                       image=image.image_name,
-                      ports=ContainerPortArgs(
+                      ports=[ContainerPortArgs(
                           internal=8000,
                           external=8000,
-                      ))
+                      )])
 
 pulumi.export("container_id", container.id)
 ```
