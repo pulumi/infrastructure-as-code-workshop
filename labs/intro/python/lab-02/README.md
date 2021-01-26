@@ -1,18 +1,18 @@
-# Lab 02 - Create a Docker Container
+# Lab 02 - Create & Run a Docker Container
 
-In this lab, we'll create our very first Pulumi resource.
+In this lab, we'll create our first Pulumi resource. We'll run a Docker container we build locally using infrastructure as code.
 
-It'll be a simple Python application that runs in a Docker container. We'll run the Docker container we build locally but manage it with Infrastructure as Code using Pulumi.
+## Step 2 - Create your application
 
-## Step 2 - Create your application directory
-
-Inside your project directory, create an application directory:
+Now, let's make a very simple HTTP application with Python. Inside your project directory, create an application directory:
 
 ```bash
 mkdir app
 ```
 
-Inside this `app` directory should be two files. First, create a `__main__.py` which will run a very simple Python webserver
+Inside this `app` directory should be two files. We need to bootstrap a webserver application. We can use native python for this:
+
+In a file called `app/__main__.py` add the following contents:
 
 ```python
 import http.server
@@ -45,7 +45,7 @@ CMD [ "python", "/app/__main__.py" ]
 
 ## Step 3 - Build your Docker Image with Pulumi
 
-Back inside your pulumi program, let's build your Docker image. Inside your `__main__.py` add the following:
+Back inside your pulumi program, let's build your Docker image. Inside your Pulumi program's `__main__.py` add the following:
 
 
 ```python
@@ -53,24 +53,19 @@ import pulumi
 from pulumi_docker import Image, DockerBuild
 
 stack = pulumi.get_stack()
-image_tag = stack
+image_name = "my-first-app"
 
 # build our image!
-image = Image("my-first-app",
+image = Image(image_name,
               build=DockerBuild(context="app"),
-              image_name=f"my-first-app:{image_tag}",
+              image_name=f"{image_name}:{stack}",
               skip_push=True)
 ```
 
-Make sure you enter your `virtualenv`
+Make sure you install the `pulumi_docker` provider from pip inside your virtualenv:
 
-```bash
+```
 source venv/bin/activate
-```
-
-And install the `pulumi_docker` provider:
-
-```
 pip3 install pulumi_docker
 ```
 
@@ -80,37 +75,8 @@ Run `pulumi up` and it should build your docker image
 
 If you run `docker images` you should see your built container.
 
-## Step 4 - Run the container
+Now that we've provisioned our first piece of infrastructure, let's look at how we can use configuration in our Pulumi programs.
 
-Finally, let's run your container. Update your pulumi program to add the following:
+# Next Steps
 
-```python
-import pulumi
-from pulumi_docker import Image, DockerBuild, Container, ContainerPortArgs
-
-stack = pulumi.get_stack()
-image_tag = stack
-
-# build our image!
-image = Image("my-first-app",
-              build=DockerBuild(context="app"),
-              image_name=f"my-first-app:{image_tag}",
-              skip_push=True)
-
-container = Container('my-first-app',
-                      image=image.base_image_name,
-                      ports=[ContainerPortArgs(
-                          internal=3000,
-                          external=3000,
-                      )])
-
-pulumi.export("container_id", container.id)
-```
-
-Re-run your Pulumi program and your container should launch. You can verify this by looking at the docker stats for the running image:
-
-```bash
-docker stats $(pulumi stack output container_id) --no-stream
-CONTAINER ID   NAME                       CPU %     MEM USAGE / LIMIT     MEM %     NET I/O     BLOCK I/O   PIDS
-4b43bf4c92ab   my-first-app-39e5943   0.03%     10.05MiB / 1.941GiB   0.51%     946B / 0B   0B / 0B     1
-```
+* [Use configuration](../lab-03/README.md)

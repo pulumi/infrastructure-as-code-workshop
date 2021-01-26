@@ -62,7 +62,36 @@ CONTAINER ID        NAME                   CPU %               MEM USAGE / LIMIT
 44dde1c3ec15        my-first-app-0d221af   0.00%               0B / 0B             0.00%               1.02kB / 796B       0B / 0B             0
 ```
 
-## Step 3 - Create a second stack
+## Step 3 - Create a "prod" stack
+
+We're now going to use the `pulumi stack` command to understand how stacks work. Let's list our existing stacks using: `pulumi stack ls`
+
+We currently only have 1 stack. Let's add a new one!
+
+```bash
+pulumi stack init prod
+```
+
+Now we have created a pulumi `prod` stack, let's try rerun our `pulumi up`:
+
+```
+Diagnostics:
+  pulumi:pulumi:Stack (my-first-app-prod):
+    error: Missing required configuration variable 'my-first-app:port'
+        please set a value using the command `pulumi config set my-first-app:port <value>`
+```
+
+Our configuration error is back! This is because when we configure values in pulumi, they are specific to a stack. So, let's set a port for our prod stack:
+
+```
+pulumi comnfig set port 5000
+```
+
+Make sure you use a different port to your `dev` stack!
+
+Now, run `pulumi up` again. You should get a whole new image and container, this time running on port 5000!
+
+## Step 4 - Create a second stack
 
 In a new directory, create a second stack called `use-docker-id`
 
@@ -74,7 +103,7 @@ pulumi new typescript
 
 Use the defaults, and ensure you use the `dev` stack.
 
-## Step 4 - Configure your stack reference
+## Step 5 - Configure your stack reference
 
 Now we need to add a stack reference in use-docker-id
 
