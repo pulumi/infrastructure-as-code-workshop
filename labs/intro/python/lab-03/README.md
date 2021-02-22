@@ -1,30 +1,65 @@
-# Lab 03 - Run a Docker Container
+# Lab 03 - Using configuration
 
-In this lab, we'll run a Docker container we build locally
+Now that we've provisioned our first resource, let's use Pulumi's configuration management to make it configurable.
 
-## Step 1 - Create a new project
+We want to run the image we've provisioned, so we're going to learn about configuration and another important topic, inputs and outputs.
 
-As before, create a new project in an empty directory and call it `pulumi-docker`
+## Step 1 - Instantiate the config
 
-```bash
-mkdir pulumi-docker
-cd pulumi-docker
-pulumi new python
+Add the following to your Pulumi program below your imports:
+
+
+```python
+config = pulumi.Config()
+port = config.require_int("port")
+```
+Your Pulumi program should now look like this:
+
+```python
+import pulumi
+from pulumi_docker import Image, DockerBuild
+
+config = pulumi.Config()
+port = config.require_int("port")
+
+stack = pulumi.get_stack()
+image_name = "my-first-app"
+
+
+# build our image!
+image = Image(image_name,
+              build=DockerBuild(context="app"),
+              image_name=f"{image_name}:{stack}",
+              skip_push=True)
 ```
 
-## Step 2 - Create your application directory
+Try and run your `pulumi up` again at this point. You should see an error like this:
 
-Inside your project directory, create an application directory:
-
-```bash
-mkdir app
+```
+Diagnostics:
+  pulumi:pulumi:Stack (my-first-app-dev):
+    error: Missing required configuration variable 'my-first-app:port'
+        please set a value using the command `pulumi config set my-first-app:port <value>`
 ```
 
-Inside this `app` directory should be two files. First, create a `__main__.py` which will run a very simple Python webserver
+This is because we have specified that this config option is _required_. Let's set it for this stack:
+
+```
+pulumi config set port 3000
+```
+
+Now, try and rerun your Pulumi program.
+
+Your Pulumi program should now run, but you're not actually using this newly configured port, yes!
+
+## Step 2 - Update your Python WebApp
+
+Let's update your `app/__main__.py` file to use a port which can be configured by an environment variable. Update that file so it looks like this:
 
 ```python
 import http.server
 import socketserver
+import os
 from http import HTTPStatus
 
 
@@ -32,93 +67,39 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         self.send_response(HTTPStatus.OK)
         self.end_headers()
-        self.wfile.write(b'Hello Lee')
+        self.wfile.write(b'Hello, world!')
 
 
-httpd = socketserver.TCPServer(('', 8000), Handler)
+
+PORT = os.environ.get("LISTEN_PORT")
+httpd = socketserver.TCPServer(('', int(PORT)), Handler)
 httpd.serve_forever()
 ```
 
-Next, create a `Dockerfile` which will be built and will include this webserver
+We're grabbing the `PORT` value here from the environment variable `LISTEN_PORT`. Now, let's use Pulumi to pass that into our Docker container.
 
-```
-FROM python:3.8.6-alpine
+## Step 3 - Create a Container resource
 
-WORKDIR /app
+In lab 02 we built a Docker Image. Now we want to create a Docker container which runs that image and pass our configuration to it.
 
-COPY __main__.py /app
-
-CMD [ "python", "/app/__main__.py" ]
-```
-
-## Step 3 - Build your Docker Image with Pulumi
-
-Back inside your pulumi program, let's build your Docker image. Inside your `__main__.py` add the following:
-
+Define a new resource in your Pulumi program below the `image` resource, like this:
 
 ```python
-import pulumi
-from pulumi_docker import Image, DockerBuild
-
-stack = pulumi.get_stack()
-image_tag = stack
-
-# build our image!
-image = Image("my-cool-image",
-              build=DockerBuild(context="app"),
-              image_name=f"my-cool-image:{image_tag}",
-              skip_push=True)
-```
-
-Make sure you enter your `virtualenv`
-
-```bash
-source venv/bin/activate
-```
-
-And install the `pulumi_docker` provider:
-
-```
-pip3 install pulumi_docker
-```
-
-You should see some output showing the pip package and the provider being installed
-
-Run `pulumi up` and it should build your docker image
-
-If you run `docker images` you should see your built container.
-
-## Step 4 - Run the container
-
-Finally, let's run your container. Update your pulumi program to add the following:
-
-```python
-import pulumi
-from pulumi_docker import Image, DockerBuild, Container, ContainerPortArgs
-
-stack = pulumi.get_stack()
-image_tag = stack
-
-# build our image!
-image = Image("my-cool-image",
-              build=DockerBuild(context="app"),
-              image_name=f"my-cool-image:{image_tag}",
-              skip_push=True)
-
-container = Container('my-running-image',
-                      image=image.image_name,
+container = Container('my-first-app',
+                      image=image.base_image_name,
+                      envs=[
+                          f"LISTEN_PORT={port}"
+                      ],
                       ports=[ContainerPortArgs(
-                          internal=8000,
-                          external=8000,
+                          internal=port,
+                          external=port,
                       )])
-
-pulumi.export("container_id", container.id)
 ```
 
-Re-run your Pulumi program and your container should launch. You can verify this by looking at the docker stats for the running image:
+It's important to note something here. In the Container resource, we are reference `baseImageName` from the `image` resource. Pulumi now knows there's a dependency between these two resources, and will know to create the `container` resource _after_ the image resource.
 
-```bash
-docker stats $(pulumi stack output container_id) --no-stream
-CONTAINER ID   NAME                       CPU %     MEM USAGE / LIMIT     MEM %     NET I/O     BLOCK I/O   PIDS
-4b43bf4c92ab   my-running-image-39e5943   0.03%     10.05MiB / 1.941GiB   0.51%     946B / 0B   0B / 0B     1
-```
+Run your `pulumi up` again here and see your docker image running.
+
+# Next Steps
+
+* [Export Outputs](../lab-04/README.md)

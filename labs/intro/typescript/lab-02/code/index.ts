@@ -1,20 +1,21 @@
 import * as pulumi from "@pulumi/pulumi";
+import * as docker from "@pulumi/docker";
 
-// create a new config object
 const config = new pulumi.Config();
+const stack = pulumi.getStack();
 
-// optional values can be undefined
-const optional_value = config.get("optional_value");
+const imageName = config.require('image_name');
 
-// required values must be set
-const required_value = config.require("required_value");
+const image = new docker.Image('local-image', {
+    build: './app',
+    imageName: `${imageName}:${stack}`,
+    skipPush: true,
+})
 
-// secret values get encrypted
-const secret_value = config.requireSecret("secret_value");
-
-console.log(optional_value)
-console.log(required_value)
-console.log(secret_value)
-
-
-
+const container = new docker.Container('local-container', {
+    image: image.baseImageName,
+    ports: [{
+        internal: 3000,
+        external: 3000,
+    }]
+})

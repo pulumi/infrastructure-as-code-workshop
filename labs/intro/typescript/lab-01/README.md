@@ -7,8 +7,8 @@ Infrastructure in Pulumi is organized into projects. Each project is a single pr
 Each Pulumi project lives in its own directory. Create one now and change into it:
 
 ```bash
-mkdir pulumi-intro
-cd pulumi-intro
+mkdir my-first-app
+cd my-first-app
 ```
 
 > Pulumi will use the directory name as your project name by default. To create an independent project, simply name the directory differently.
@@ -18,13 +18,13 @@ cd pulumi-intro
 A Pulumi project is just a directory with some files in it. It's possible for you to create a new one by hand. The `pulumi new` command, however, automates the process:
 
 ```bash
-pulumi new typescript -y
+pulumi new typescript
 ```
 
 This will print output similar to the following with a bit more information and status as it goes:
 
 ```
-Created project 'pulumi-intro'
+Created project 'my-first-app'
 Created stack 'dev'
 Saved config
 Installing dependencies...
@@ -55,4 +55,4 @@ Feel free to explore the other files, although we won't be editing any of them b
 
 # Next Steps
 
-* [Manage Configuration](../lab-02/README.md)
+* [Create your first resource](../lab-02/README.md)
