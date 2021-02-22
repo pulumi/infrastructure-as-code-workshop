@@ -1,160 +1,102 @@
-# Managing Configuration in Pulumi
+# Lab 02 - Create & Run a Docker Container
 
-Pulumi has optional and required configuration, so let's use both of these in our program.
+In this lab, we'll create our first Pulumi resource. We'll run a Docker container we build locally using infrastructure as code.
 
-## Step 1 - Create a new pulumi project
+## Step 2 - Create your application
 
-Create a new empty directory, and create a new pulumi project called `getting-started`
+Now, let's make a very simple HTTP application with typescript. Inside your project directory, create an application directory:
 
 ```bash
-mkdir getting-started
-cd getting-started
-pulumi new typescript
+mkdir app
 ```
 
-Follow the prompts, and Use the default stack name `dev`
+Inside this `app` directory should be two files. We need to bootstrap a webserver application. We'll use [express.js](https://expressjs.com/) for this.
 
-## Step 2 - Add some required configuration
+First, let's get all the dependencies we need:
 
-In your `index.ts` add the following content
+```bash
+# create a npm package
+npm init --yes
+# install typescript
+npm install typescript
+# install expressjs
+npm install express @types/express morgan @types/morgan
+```
+
+Now, let's define our express.js webserver. In a file called `index.ts`, let's add the following:
 
 ```typescript
+import express = require('express');
+import morgan = require('morgan');
+
+const app: express.Application = express();
+
+// defines a logger for output
+app.use(morgan('combined'))
+
+app.get('/', function(req, res) {
+    res.send("Hello world!");
+});
+
+app.listen(3000, function() {
+    console.log('Starting app on port 3000!');
+})
+```
+
+Next, create a `Dockerfile` which will be built and will include this webserver
+
+```
+FROM node:12
+
+WORKDIR /app
+
+COPY *.json /app/
+COPY index.ts /app/
+
+RUN npm install && npm run env -- tsc index.ts
+# use dumb-init so docker containers respect signals
+RUN wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.2/dumb-init_1.2.2_amd64 && chmod +x /usr/local/bin/dumb-init
+
+EXPOSE 3000
+
+ENTRYPOINT ["/usr/local/bin/dumb-init", "--"]
+CMD [ "node", "index.js" ]
+```
+
+## Step 3 - Build your Docker Image with Pulumi
+
+Back inside your pulumi program, let's build your Docker image. Inside your `index.ts` add the following:
+
+
+```typescript                                                                                                                                                                                                        0.0s
 import * as pulumi from "@pulumi/pulumi";
+import * as docker from "@pulumi/docker";
 
-// create a new config object
-const config = new pulumi.Config();
+const stack = pulumi.getStack();
 
-// required values must be set
-const required_value = config.require("required_value")
+const imageName = "my-first-app"
+
+const image = new docker.Image('local-image', {
+    build: './app',
+    imageName: `${imageName}:${stack}`,
+    skipPush: true,
+})
 ```
 
-Save and exit, and then run `pulumi up` on this project. You should receive an error:
-
-```bash
-error: Missing required configuration variable 'my-first-app:required_value'
-        please set a value using the command `pulumi config set my-first-app:required_value <value>`
-```
-
-## Step 3 - Populate the configuration
-
-Set the configuration option that is missing:
-
-```bash
-pulumi config set required_value "Hello, world!"
-```
-
-Re-run `pulumi up` and see that your pulumi program runs successfully, but there's no output.
-
-## Step 4 - Add more configuration options
-
-Now, populate your `index.ts` with two other configuration values and use the javascript `console.log` function to log their values
-
-```typescript
-import * as pulumi from "@pulumi/pulumi";
-
-// create a new config object
-const config = new pulumi.Config();
-
-// optional values can be undefined
-const optional_value = config.get("optional_value");
-
-// required values must be set
-const required_value = config.require("required_value");
-
-// secret values get encrypted
-const secret_value = config.requireSecret("secret_value");
-
-console.log(optional_value)
-console.log(required_value)
-console.log(secret_value)
-```
-
-Set the required secret value using the `--secret` flag, like so:
-
-```bash
-pulumi config set secret_value "i-am-secret" --secret
-```
-
-Run `pulumi up` and examine the output
-
-```bash
-pulumi up
-Previewing update (dev)
-
-View Live: https://app.pulumi.com/jaxxstorm/getting-started/dev/previews/7ca6f282-c21f-49f3-a88d-bf6dcd1da608
-
-     Type                 Name              Plan     Info
-     pulumi:pulumi:Stack  getting-started-dev           12 messages
- 
-Diagnostics:
-  pulumi:pulumi:Stack (getting-started-dev):
-    undefined
-    Hello, world!
-    OutputImpl {
-      __pulumiOutput: true,
-      resources: [Function],
-      allResources: [Function],
-      isKnown: Promise { <pending> },
-      isSecret: Promise { <pending> },
-      promise: [Function],
-      toString: [Function],
-      toJSON: [Function]
-    }
-```
-
-Note that the secret output is not in plaintext in the terminal
-
-## Step 5 - Examine the stack config
-
-In your Pulumi program directory, check the content of the `Pulumi.dev.yaml` file:
-
-```yaml
-config:
-  getting-started:required_value: Hello, world!
-  getting-started:secret_value:
-    secure: AAABAKZdk4cT2RobMMGx2sbqwSZzaiXIp9j5UdLZUGT8zVA1Xc0wtJOjBQ==
-```
-
-## Step 6 - Create a new stack
-
-Now, initialize a new stack using the `pulumi stack init` command:
-
-```bash
-pulumi stack init prod
-```
-
-check the available stacks:
+Make sure you install the `@pulumi/docker` provider:
 
 ```
-pulumi stack ls
-NAME   LAST UPDATE  RESOURCE COUNT  URL
-dev    n/a          n/a             https://app.pulumi.com/jaxxstorm/getting-started/dev
-prod*  n/a          n/a             https://app.pulumi.com/jaxxstorm/getting-started/prod
+npm install @pulumi/docker
 ```
 
-Notice the asterisk denoting the stack we're using.
+You should see some output showing the npm package and the provider being installed
 
-Now, try and run that stack with `pulumi up`:
+Run `pulumi up` and it should build your docker image
 
-```bash
-pulumi:pulumi:Stack (stack-1-prod):
-    error: Missing required configuration variable 'getting-started:required_value'
-        please set a value using the command `pulumi config set getting-started:message <value>`
-    error: an unhandled error occurred: Program exited with non-zero exit code: 1
-````
+If you run `docker images` you should see your built container.
 
-Our production stack does not have the configuration values. Configuration is stack dependent. We won't be using this stack, so let's delete it:
-
-```
-pulumi stack rm prod
-```
-
-and switch back to our `dev` stack:
-
-```bash
-pulumi stack select dev
-```
+Now that we've provisioned our first piece of infrastructure, let's look at how we can use configuration in our Pulumi programs.
 
 # Next Steps
 
-* [Resources](../lab-03/README.md)
+* [Use configuration](../lab-03/README.md)

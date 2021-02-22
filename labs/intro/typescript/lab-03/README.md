@@ -1,45 +1,66 @@
-# Lab 03 - Run a Docker Container
+# Lab 03 - Using configuration
 
-In this lab, we'll run a Docker container we build locally:
+Now that we've provisioned our first resource, let's use Pulumi's configuration management to make it configurable.
 
-## Step 1 - Create a new project
+We want to run the image we've provisioned, so we're going to learn about configuration and another important topic, inputs and outputs.
 
-As before, create a new project in an empty directory and call it `pulumi-docker`
+## Step 1 - Instantiate the config
 
-```bash
-mkdir pulumi-docker
-cd pulumi-docker
-pulumi new typescript
+Add the following to your Pulumi program below your imports:
+
+
+```typescript
+const config = new pulumi.Config();
+const port = config.require("port")
+```
+Your Pulumi program should now look like this:
+
+```typescript
+import * as pulumi from "@pulumi/pulumi";
+import * as docker from "@pulumi/docker";
+
+const config = new pulumi.Config();
+const port = config.requireNumber("port")
+
+const imageName = "my-first-app"
+const stack = pulumi.getStack();
+
+const image = new docker.Image('local-image', {
+    build: './app',
+    imageName: `${imageName}:${stack}`,
+    skipPush: true,
+})
 ```
 
-## Step 2 - Create your application
+Try and run your `pulumi up` again at this point. You should see an error like this:
 
-Now, let's make a very simple HTTP application with typescript. Inside your project directory, create an application directory:
-
-```bash
-mkdir app
+```
+Diagnostics:
+  pulumi:pulumi:Stack (my-first-app-dev):
+    error: Missing required configuration variable 'my-first-app:port'
+        please set a value using the command `pulumi config set my-first-app:port <value>`
 ```
 
-Inside this `app` directory should be two files. We need to bootstrap a webserver application. We'll use [express.js](https://expressjs.com/) for this.
+This is because we have specified that this config option is _required_. Let's set it for this stack:
 
-First, let's get all the dependencies we need:
-
-```bash
-# create a npm package
-npm init --yes
-# install typescript
-npm install typescript
-# install expressjs
-npm install express @types/express morgan @types/morgan
+```
+pulumi config set port 3000
 ```
 
-Now, let's define our express.js webserver. In a file called `index.ts`, let's add the following:
+Now, try and rerun your Pulumi program.
+
+Your Pulumi program should now run, but you're not actually using this newly configured port, yes!
+
+## Step 2 - Update your TypeScript WebApp
+
+Let's update your `app/index.ts` file to use a port which can be configured by an environment variable. Update that file so it looks like this:
 
 ```typescript
 import express = require('express');
 import morgan = require('morgan');
 
 const app: express.Application = express();
+const listenPort = process.env["LISTEN_PORT"];
 
 // defines a logger for output
 app.use(morgan('combined'))
@@ -48,98 +69,36 @@ app.get('/', function(req, res) {
     res.send("Hello world!");
 });
 
-app.listen(3000, function() {
-    console.log('Starting app on port 3000!');
+app.listen(listenPort, function() {
+    console.log('Starting app on port' + listenPort);
 })
 ```
 
-Next, create a `Dockerfile` which will be built and will include this webserver
+We're grabbing the `listPort` value here from the environment variable `LISTEN_PORT`. Now, let's use Pulumi to pass that into our Docker container.
 
-```
-FROM node:12
+## Step 3 - Create a Container resource
 
-WORKDIR /app
+In lab 02 we built a Docker Image. Now we want to create a Docker container which runs that image and pass our configuration to it.
 
-COPY *.json /app/
-COPY index.ts /app/
-
-RUN npm install && npm run env -- tsc index.ts
-# use dumb-init so docker containers respect signals
-RUN wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.2/dumb-init_1.2.2_amd64 && chmod +x /usr/local/bin/dumb-init
-
-EXPOSE 3000
-
-ENTRYPOINT ["/usr/local/bin/dumb-init", "--"]
-CMD [ "node", "index.js" ]
-```
-
-## Step 3 - Build your Docker Image with Pulumi
-
-Back inside your pulumi program, let's build your Docker image. Inside your `index.ts` add the following:
-
-
-```typescript                                                                                                                                                                                                        0.0s
-import * as pulumi from "@pulumi/pulumi";
-import * as docker from "@pulumi/docker";
-
-const config = new pulumi.Config();
-const stack = pulumi.getStack();
-
-const imageName = config.require('image_name');
-
-const image = new docker.Image('local-image', {
-    build: './app',
-    imageName: `${imageName}:${stack}`,
-    skipPush: true,
-})
-```
-
-Make sure you install the `@pulumi/docker` provider:
-
-```
-npm install @pulumi/docker
-```
-
-You should see some output showing the npm package and the provider being installed
-
-Run `pulumi up` and it should build your docker image
-
-If you run `docker images` you should see your built container.
-
-## Step 4 - Run the container
-
-Finally, let's run your container. Update your pulumi program to add the following:
+Define a new resource in your Pulumi program below the `image` resource, like this:
 
 ```typescript
-import * as pulumi from "@pulumi/pulumi";
-import * as docker from "@pulumi/docker";
-
-const config = new pulumi.Config();
-const stack = pulumi.getStack();
-
-const imageName = config.require('image_name');
-
-const image = new docker.Image('local-image', {
-    build: './app',
-    imageName: `${imageName}:${stack}`,
-    skipPush: true,
-})
-
-const container = new docker.Container('local-container', {
+const container = new docker.Container(imageName, {
     image: image.baseImageName,
+    envs: [
+        "LISTEN_PORT="+port,
+    ],
     ports: [{
-        internal: 3000,
-        external: 3000,
+        internal: port,
+        external: port,
     }]
 })
 ```
 
-Re-run your Pulumi program and your container should launch. You can verify this by looking at the docker stats for the running image:
+It's important to note something here. In the Container resource, we are reference `baseImageName` from the `image` resource. Pulumi now knows there's a dependency between these two resources, and will know to create the `container` resource _after_ the image resource.
 
-```bash
-docker stats $(pulumi stack output container_id) --no-stream
-CONTAINER ID   NAME                       CPU %     MEM USAGE / LIMIT     MEM %     NET I/O     BLOCK I/O   PIDS
-4b43bf4c92ab   my-running-image-39e5943   0.03%     10.05MiB / 1.941GiB   0.51%     946B / 0B   0B / 0B     1
-```
+Run your `pulumi up` again here and see your docker image running.
 
+# Next Steps
 
+* [Export Outputs](../lab-04/README.md)
