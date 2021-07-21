@@ -1,7 +1,7 @@
 from pulumi import export
 import pulumi_aws as aws
 
-ami = aws.get_ami(
+ami = aws.ec2.get_ami(
     most_recent="true",
     owners=["137112412989"],
     filters=[{"name":"name","values":["amzn-ami-hvm-*-x86_64-ebs"]}])
@@ -48,7 +48,7 @@ hostnames = []
 for az in aws.get_availability_zones().names:
     server = aws.ec2.Instance(f'web-server-{az}',
       instance_type="t2.micro",
-      security_groups=[group.name],
+      vpc_security_group_ids=[group.id],
       ami=ami.id,
       user_data="""#!/bin/bash
 echo \"Hello, World -- from {}!\" > index.html
