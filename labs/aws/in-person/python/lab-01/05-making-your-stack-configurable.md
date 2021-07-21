@@ -23,9 +23,9 @@ filepath = os.path.join(site_dir, "index.html")
 mime_type = mimetypes.guess_type(filepath)
 
 obj = aws.s3.BucketObject("index.html",
-    bucket=bucket.name,
+    bucket=bucket.bucket,
     source=pulumi.FileAsset(filepath),
-    acl="public_read",
+    acl="public-read",
     content_type=mime_type,
 )
 ```
@@ -100,9 +100,9 @@ for file in os.listdir(site_dir):
     filepath = os.path.join(site_dir, file)
     mime_type, _ = mimetypes.guess_type(filepath)
     obj = aws.s3.BucketObject(file,
-          bucket=bucket.name,
+          bucket=bucket.bucket,
           source=pulumi.FileAsset(filepath),
-          acl="public_read",
+          acl="public-read",
           content_type=mime_type
     )
 ```

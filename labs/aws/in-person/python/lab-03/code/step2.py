@@ -15,7 +15,7 @@ group = aws.ec2.SecurityGroup(
         { 'protocol': 'tcp', 'from_port': 80, 'to_port': 80, 'cidr_blocks': ['0.0.0.0/0'] }
     ],
     egress=[
-        { 'protocol': 'tcp', 'from_port': 80, 'to_port': 80, 'cidr_blocks': ['0.0.0.0/0'] }
+        { 'protocol': "-1", 'from_port': 0, 'to_port': 0, 'cidr_blocks': ['0.0.0.0/0'] }
     ])
 
 alb = aws.lb.LoadBalancer("app-lb",
@@ -27,7 +27,6 @@ alb = aws.lb.LoadBalancer("app-lb",
 
 atg = aws.lb.TargetGroup("app-tg",
   port=80,
-  deregistration_delay=0,
   protocol="HTTP",
   target_type="ip",
   vpc_id=default_vpc.id
