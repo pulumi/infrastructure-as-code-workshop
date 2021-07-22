@@ -15,7 +15,7 @@ pip3 install pulumi-aws
 Now that the AWS package is installed, add the following line to `__main__.py` to import it:
 
 ```python
-...
+# ...
 import pulumi_aws as aws
 ```
 

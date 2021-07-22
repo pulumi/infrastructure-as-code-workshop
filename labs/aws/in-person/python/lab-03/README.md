@@ -17,7 +17,7 @@ import pulumi_aws as aws
 And now create a new ECS cluster. You will use the default values, so doing so is very concise:
 
 ```python
-...
+# ...
 cluster = aws.ecs.Cluster("cluster")
 ```
 
@@ -29,7 +29,7 @@ Next, allocate the application load balancer (ALB) and listen for HTTP traffic p
 default VPC and the subnet groups for it:
 
 ```python
-...
+# ...
 default_vpc = aws.ec2.get_vpc(default="true")
 default_vpc_subnets = aws.ec2.get_subnet_ids(vpc_id=default_vpc.id)
 
@@ -83,7 +83,7 @@ import json
 ```
 
 ```python
-...
+# ...
 role = aws.iam.Role("task-exec-role",
     assume_role_policy=json.dumps({
         "Version": "2008-10-17",
@@ -192,7 +192,7 @@ And you'll see the Nginx default homepage:
 <html>
 <head>
 <title>Welcome to nginx!</title>
-...
+# ...
 ```
 
 ## Step 5 &mdash; Update the Service
@@ -200,9 +200,9 @@ And you'll see the Nginx default homepage:
 Now, also update the desired container count from `1` to `3`:
 
 ```
-...
+# ...
     desiredCount: 3,
-...
+# ...
 ```
 
 > :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step5.py).

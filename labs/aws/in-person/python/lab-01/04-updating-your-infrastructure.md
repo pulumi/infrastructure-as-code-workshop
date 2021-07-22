@@ -23,21 +23,21 @@ Create a directory `site/` and add a new `index.html` file with the following co
 Add an import to your `__main__.py` file:
 
 ```python
-...
+# ...
 import os
-...
+# ...
 ```
 
 And then add these lines to `__main__.py` right after creating the bucket itself:
 
 ```python
-...
+# ...
 filepath = os.path.join("site", "index.html")
 obj = aws.s3.BucketObject("index.html",
     bucket=bucket.id,
     source=pulumi.FileAsset(filepath)
 )
-...
+# ...
 ```
 
 > :white_check_mark: After these changes, your `__main__.py` should [look like this](./code/04-updating-your-infrastructure/step1.py).
@@ -87,19 +87,19 @@ To serve content from your bucket as a website, you'll need to update a few prop
 First, your bucket needs a website property that sets the default index document to `index.html`:
 
 ```python
-...
+# ...
 bucket = aws.s3.Bucket("my-bucket",
     website={
         "index_document": "index.html"
 })
-...
+# ...
 ```
 
 Next, your `index.html` object will need two changes: an ACL of `public-read` so that it can be accessed anonymously over the Internet, and a content type so that it is served as HTML:
 
 ```python
 import mimetypes
-...
+# ...
 filepath = os.path.join("site", "index.html")
 mime_type, _ = mimetypes.guess_type(filepath)
 obj = aws.s3.BucketObject("index.html",
@@ -108,15 +108,15 @@ obj = aws.s3.BucketObject("index.html",
         acl="public-read",
         content_type=mime_type
 )
-...
+# ...
 ```
 
 Finally, export the resulting bucket's endpoint URL so we can easily access it:
 
 ```python
-...
+# ...
 pulumi.export('bucket_endpoint', pulumi.Output.concat("http://", bucket.website_endpoint))
-...
+# ...
 ```
 
 > :white_check_mark: After these changes, your `__main__.py` should [look like this](./code/04-updating-your-infrastructure/step2.py).
