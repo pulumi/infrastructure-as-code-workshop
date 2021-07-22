@@ -114,7 +114,7 @@ Now you will create multiple VM instances, each running the same Python webserve
 your region. Replace the part of your code that creates the webserver and exports the resulting IP address and hostname with the following:
 
 ```python
-...
+# ...
 ips = []
 hostnames = []
 for az in aws.get_availability_zones().names:
@@ -208,9 +208,10 @@ target group used by the load balancer to route requests, you must verify that t
 traffic on the new port in both directions.
 
 ```python
-...
+# ...
 group = aws.ec2.SecurityGroup(
     "web-secgrp",
+    description='Enable HTTP access',
     ingress=[
         { 'protocol': 'icmp', 'from_port': 8, 'to_port': 0, 'cidr_blocks': ['0.0.0.0/0'] },
         { 'protocol': 'tcp', 'from_port': 80, 'to_port': 80, 'cidr_blocks': ['0.0.0.0/0'] },
@@ -219,7 +220,7 @@ group = aws.ec2.SecurityGroup(
         { 'protocol': 'tcp', 'from_port': 80, 'to_port': 80, 'cidr_blocks': ['0.0.0.0/0'] },
     ]
 )
-...
+# ...
 ```
 
 This is required to ensure the security group ingress rules don't conflict with the load balancer's.
@@ -227,7 +228,7 @@ This is required to ensure the security group ingress rules don't conflict with 
 Now right after the security group creation, and before the VM creation block, add the load balancer creation steps:
 
 ```python
-...
+# ...
 default_vpc = aws.ec2.get_vpc(default="true")
 default_vpc_subnets = aws.ec2.get_subnet_ids(vpc_id=default_vpc.id)
 
@@ -253,13 +254,13 @@ listener = aws.lb.Listener("listener",
        "target_group_arn": target_group.arn
    }]
 )
-...
+# ...
 ```
 
 And then replace the VM creation block with the following:
 
 ```python
-...
+# ...
 ips = []
 hostnames = []
 for az in aws.get_availability_zones().names:

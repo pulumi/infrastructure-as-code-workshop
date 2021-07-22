@@ -7,7 +7,7 @@ Now that you have a project configured to use AWS, you'll create some basic infr
 Add the following to your `__main__.py` file:
 
 ```python
-...
+# ...
 bucket = aws.s3.Bucket("my-bucket")
 ```
 
@@ -87,7 +87,7 @@ To inspect your new bucket, you will need its physical AWS name. Pulumi records 
 Programs can export variables which will be shown in the CLI and recorded for each deployment. Export your bucket's name by adding this line to `__main__.py`:
 
 ```python
-...
+# ...
 pulumi.export('bucket_name', bucket.bucket)
 ```
 
@@ -102,7 +102,7 @@ pulumi up
 Notice a new `Outputs` section is included in the output containing the bucket's name:
 
 ```
-...
+# ...
 
 Outputs:
   + bucket_name: "my-bucket-8257ac5"

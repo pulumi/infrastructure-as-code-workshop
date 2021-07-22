@@ -77,7 +77,7 @@ You'll now declare a [deployment object](https://kubernetes.io/docs/concepts/wor
 Append this to your `__main__.py` file:
 
 ```python
-...
+# ...
 app_labels = {
     "app": "iac-workshop"
 }
@@ -115,7 +115,7 @@ Next, you'll declare a [service object](https://kubernetes.io/docs/concepts/serv
 Append this to your `__main__.py` file:
 
 ```python
-...
+# ...
 service = Service("app-service",
     metadata={
         "namespace": ns.metadata["name"],
@@ -136,7 +136,7 @@ service = Service("app-service",
 Afterwards, add these lines to export the resulting, dynamically assigned endpoint for the resulting load balancer:
 
 ```python
-...
+# ...
 export('url', Output.all(service.status['load_balancer']['ingress'][0]['hostname'], service.spec['ports'][0]['port'])\
     .apply(lambda args: f"http://{args[0]}:{round(args[1])}"))
 ```
@@ -222,17 +222,17 @@ Note that the application says `Demo application version v0.10.0-blue` in the ba
 First update your deployment's configuration's replica count:
 
 ```
-...
+# ...
         replicas=3,
-...
+# ...
 ```
 
 And then update its image to:
 
 ```
-...
+# ...
                     image="jocatalin/kubernetes-bootcamp:v2",
-...
+# ...
 ```
 
 > :white_check_mark: After this change, your `__main__.py` should [look like this](./code/step6.py).

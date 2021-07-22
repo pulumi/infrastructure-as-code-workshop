@@ -123,7 +123,7 @@ Updating (dev):
      Type                    Name              Status
      pulumi:pulumi:Stack     iac-workshop-dev
  +   └─ aws:s3:BucketObject  about.html        created
-...
+# ...
 ```
 
 Now fetch it:
