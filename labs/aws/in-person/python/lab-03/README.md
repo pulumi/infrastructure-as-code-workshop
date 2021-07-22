@@ -10,7 +10,7 @@ In this lab, you will deploy a containerized application to an AWS ECS cluster.
 Import the AWS and Pulumi packages in an empty `__main__.py` file:
 
 ```python
-from pulumi import export
+from pulumi import export, ResourceOptions
 import pulumi_aws as aws
 ```
 
@@ -135,7 +135,7 @@ service = aws.ecs.Service("app-svc",
         "container_name": "my-app",
         "container_port": 80
     }],
-    __opts__=ResourceOptions(depends_on=[wl])
+    opts=ResourceOptions(depends_on=[wl])
 )
 
 export("url", alb.dns_name)
