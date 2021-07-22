@@ -211,6 +211,7 @@ traffic on the new port in both directions.
 ...
 group = aws.ec2.SecurityGroup(
     "web-secgrp",
+    description='Enable HTTP access',
     ingress=[
         { 'protocol': 'icmp', 'from_port': 8, 'to_port': 0, 'cidr_blocks': ['0.0.0.0/0'] },
         { 'protocol': 'tcp', 'from_port': 80, 'to_port': 80, 'cidr_blocks': ['0.0.0.0/0'] },
