@@ -5,11 +5,11 @@ class MyStack : Stack
     public MyStack()
     {
         var cluster = new Pulumi.Aws.Ecs.Cluster("app-cluster");
-        
+
         // Read back the default VPC and public subnets, which we will use.
-        var vpc = Output.Create(Pulumi.Aws.Ec2.GetVpc.InvokeAsync(new Pulumi.Aws.Ec2.GetVpcArgs {Default = true}));
+        var vpc = Output.Create(Pulumi.Aws.Ec2.GetVpc.InvokeAsync(new Pulumi.Aws.Ec2.GetVpcArgs { Default = true }));
         var vpcId = vpc.Apply(vpc => vpc.Id);
-        var subnet = vpcId.Apply(id => Pulumi.Aws.Ec2.GetSubnetIds.InvokeAsync(new Pulumi.Aws.Ec2.GetSubnetIdsArgs {VpcId = id}));
+        var subnet = vpcId.Apply(id => Pulumi.Aws.Ec2.GetSubnetIds.InvokeAsync(new Pulumi.Aws.Ec2.GetSubnetIdsArgs { VpcId = id }));
         var subnetIds = subnet.Apply(s => s.Ids);
 
         // Create a SecurityGroup that permits HTTP ingress and unrestricted egress.
@@ -37,12 +37,12 @@ class MyStack : Stack
                 }
             }
         });
-        
+
         // Create a load balancer to listen for HTTP traffic on port 80.
         var webLb = new Pulumi.Aws.LB.LoadBalancer("web-lb", new Pulumi.Aws.LB.LoadBalancerArgs
         {
             Subnets = subnetIds,
-            SecurityGroups = {webSg.Id}
+            SecurityGroups = { webSg.Id }
         });
         var webTg = new Pulumi.Aws.LB.TargetGroup("web-tg", new Pulumi.Aws.LB.TargetGroupArgs
         {
@@ -64,7 +64,7 @@ class MyStack : Stack
                 }
             }
         });
-        
+
         // Create an IAM role that can be used by our service's task.
         var taskExecRole = new Pulumi.Aws.Iam.Role("task-exec-role", new Pulumi.Aws.Iam.RoleArgs
         {
@@ -85,7 +85,7 @@ class MyStack : Stack
             Role = taskExecRole.Name,
             PolicyArn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
         });
-        
+
         // Spin up a load balanced service running our container image.
         var appTask = new Pulumi.Aws.Ecs.TaskDefinition("app-task", new Pulumi.Aws.Ecs.TaskDefinitionArgs
         {
@@ -93,7 +93,7 @@ class MyStack : Stack
             Cpu = "256",
             Memory = "512",
             NetworkMode = "awsvpc",
-            RequiresCompatibilities = {"FARGATE"},
+            RequiresCompatibilities = { "FARGATE" },
             ExecutionRoleArn = taskExecRole.Arn,
             ContainerDefinitions = @"[{
 ""name"": ""my-app"",
@@ -115,22 +115,22 @@ class MyStack : Stack
             {
                 AssignPublicIp = true,
                 Subnets = subnetIds,
-                SecurityGroups = {webSg.Id}
+                SecurityGroups = { webSg.Id }
             },
             LoadBalancers =
             {
-                new Pulumi.Aws.Ecs.Inputs.ServiceLoadBalancersArgs
+                new Pulumi.Aws.Ecs.Inputs.ServiceLoadBalancerArgs
                 {
                     TargetGroupArn = webTg.Arn,
                     ContainerName = "my-app",
                     ContainerPort = 80
                 }
             }
-        }, new CustomResourceOptions {DependsOn = {webListener}});
-        
+        }, new CustomResourceOptions { DependsOn = { webListener } });
+
         // Export the resulting web address.
         this.Url = Output.Format($"http://{webLb.DnsName}");
     }
-    
+
     [Output] public Output<string> Url { get; set; }
 }

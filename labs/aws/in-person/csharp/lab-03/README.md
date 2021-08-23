@@ -2,7 +2,7 @@
 
 In this lab, you will deploy a containerized application to an AWS ECS cluster.
 
-> This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete parts [1](../lab-01/01-creating-a-new-project.md) 
+> This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete parts [1](../lab-01/01-creating-a-new-project.md)
 > and [2](../lab-01/02-configuring-aws.md) of lab-01.
 
 ## Step 1 &mdash; Create an ECS Cluster
@@ -81,7 +81,7 @@ var webListener = new Pulumi.Aws.LB.Listener("web-listener", new Pulumi.Aws.LB.L
     Port = 80,
     DefaultActions =
     {
-        new Pulumi.Aws.LB.Inputs.ListenerDefaultActionsArgs
+        new Pulumi.Aws.LB.Inputs.ListenerDefaultActionArgs
         {
             Type = "forward",
             TargetGroupArn = webTg.Arn,
@@ -154,7 +154,7 @@ var appSvc = new Pulumi.Aws.Ecs.Service("app-svc", new Pulumi.Aws.Ecs.ServiceArg
     },
     LoadBalancers =
     {
-        new Pulumi.Aws.Ecs.Inputs.ServiceLoadBalancersArgs
+        new Pulumi.Aws.Ecs.Inputs.ServiceLoadBalancerArgs
         {
             TargetGroupArn = webTg.Arn,
             ContainerName = "my-app",
@@ -282,6 +282,6 @@ pulumi stack rm
 
 ## Next Steps
 
-Congratulations! :tada: You've created an ECS "Fargate" cluster, created a load balanced service within it, and a  Docker container image to your scaled-out service.
+Congratulations! :tada: You've created an ECS "Fargate" cluster, created a load balanced service within it, and a Docker container image to your scaled-out service.
 
 Next, view the [suggested next steps](../../../../README.md#next-steps) after completing all labs.
