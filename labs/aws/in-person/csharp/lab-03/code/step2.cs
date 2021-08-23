@@ -5,11 +5,11 @@ class MyStack : Stack
     public MyStack()
     {
         var cluster = new Pulumi.Aws.Ecs.Cluster("app-cluster");
-        
+
         // Read back the default VPC and public subnets, which we will use.
-        var vpc = Output.Create(Pulumi.Aws.Ec2.GetVpc.InvokeAsync(new Pulumi.Aws.Ec2.GetVpcArgs {Default = true}));
+        var vpc = Output.Create(Pulumi.Aws.Ec2.GetVpc.InvokeAsync(new Pulumi.Aws.Ec2.GetVpcArgs { Default = true }));
         var vpcId = vpc.Apply(vpc => vpc.Id);
-        var subnet = vpcId.Apply(id => Pulumi.Aws.Ec2.GetSubnetIds.InvokeAsync(new Pulumi.Aws.Ec2.GetSubnetIdsArgs {VpcId = id}));
+        var subnet = vpcId.Apply(id => Pulumi.Aws.Ec2.GetSubnetIds.InvokeAsync(new Pulumi.Aws.Ec2.GetSubnetIdsArgs { VpcId = id }));
         var subnetIds = subnet.Apply(s => s.Ids);
 
         // Create a SecurityGroup that permits HTTP ingress and unrestricted egress.
@@ -37,12 +37,12 @@ class MyStack : Stack
                 }
             }
         });
-        
+
         // Create a load balancer to listen for HTTP traffic on port 80.
         var webLb = new Pulumi.Aws.LB.LoadBalancer("web-lb", new Pulumi.Aws.LB.LoadBalancerArgs
         {
             Subnets = subnetIds,
-            SecurityGroups = {webSg.Id}
+            SecurityGroups = { webSg.Id }
         });
         var webTg = new Pulumi.Aws.LB.TargetGroup("web-tg", new Pulumi.Aws.LB.TargetGroupArgs
         {
@@ -57,7 +57,7 @@ class MyStack : Stack
             Port = 80,
             DefaultActions =
             {
-                new Pulumi.Aws.LB.Inputs.ListenerDefaultActionsArgs
+                new Pulumi.Aws.LB.Inputs.ListenerDefaultActionArgs
                 {
                     Type = "forward",
                     TargetGroupArn = webTg.Arn,
