@@ -26,10 +26,10 @@ func main() {
 			Filters: []aws.GetAmiFilter{
 				{
 					Name:   "name",
-					Values: []string{"amzn-ami-hvm-*-x86_64-ebs"},
+					Values: []string{"amzn2-ami-k*-hvm-*-x86_64-gp2"},
 				},
 			},
-			Owners:     []string{"137112412989"},
+			Owners:     []string{"amazon"},
 			MostRecent: &mostRecent,
 		})
 		if err != nil {

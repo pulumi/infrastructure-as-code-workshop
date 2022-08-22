@@ -17,9 +17,9 @@ import * as aws from "@pulumi/aws";
 Now dynamically query the Amazon Linux machine image. Doing this in code avoids needing to hard-code the machine image (a.k.a., its AMI):
 
 ```typescript
-const ami = aws.getAmi({
-    filters: [{ name: "name", values: ["amzn-ami-hvm-*-x86_64-ebs"] }],
-    owners: [ "137112412989" ],
+const ami = aws.ec2.getAmi({
+    filters: [{ name: "name", values: ["amzn2-ami-k*-hvm-*-x86_64-gp2"] }],
+    owners: [ "amazon" ],
     mostRecent: true,
 }).then(ami => ami.id);
 ```

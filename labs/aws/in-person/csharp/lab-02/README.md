@@ -20,10 +20,10 @@ Now dynamically query the Amazon Linux machine image. Doing this in code avoids 
 var ami = Output.Create(Pulumi.Aws.Invokes.GetAmi(new Pulumi.Aws.GetAmiArgs
 {
     MostRecent = true,
-    Owners = {"137112412989"},
+    Owners = {"amazon"},
     Filters = {new Pulumi.Aws.Inputs.GetAmiFiltersArgs
     {
-        Name = "name", Values = {"amzn-ami-hvm-*"}
+        Name = "name", Values = {"amzn2-ami-k*-hvm-*-x86_64-gp2"}
     }}
 }));
 ```

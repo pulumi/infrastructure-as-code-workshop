@@ -1,8 +1,8 @@
 import * as aws from "@pulumi/aws";
 
-const ami = aws.getAmi({
-    filters: [{ name: "name", values: ["amzn-ami-hvm-*-x86_64-ebs"] }],
-    owners: [ "137112412989" ],
+const ami = aws.ec2.getAmi({
+    filters: [{ name: "name", values: ["amzn2-ami-k*-hvm-*-x86_64-gp2"] }],
+    owners: [ "amazon" ],
     mostRecent: true,
 }).then(ami => ami.id);
 

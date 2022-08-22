@@ -13,10 +13,10 @@ class MyStack : Stack
         var ami = Output.Create(Pulumi.Aws.GetAmi.InvokeAsync(new Pulumi.Aws.GetAmiArgs
         {
             MostRecent = true,
-            Owners = {"137112412989"},
+            Owners = {"amazon"},
             Filters = {new Pulumi.Aws.Inputs.GetAmiFiltersArgs
             {
-                Name = "name", Values = {"amzn-ami-hvm-*"}
+                Name = "name", Values = {"amzn2-ami-k*-hvm-*-x86_64-gp2"}
             }}
         }));
 

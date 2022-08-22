@@ -3,8 +3,8 @@ import pulumi_aws as aws
 
 ami = aws.ec2.get_ami(
     most_recent="true",
-    owners=["137112412989"],
-    filters=[{"name":"name","values":["amzn-ami-hvm-*-x86_64-ebs"]}])
+    owners=["amazon"],
+    filters=[{"name":"name","values":["amzn2-ami-k*-hvm-*-x86_64-gp2"]}])
 
 group = aws.ec2.SecurityGroup(
     "web-secgrp",

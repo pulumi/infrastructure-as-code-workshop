@@ -20,8 +20,8 @@ Now dynamically query the Amazon Linux machine image. Doing this in code avoids 
 ```python
 ami = aws.ec2.get_ami(
     most_recent="true",
-    owners=["137112412989"],
-    filters=[{"name":"name","values":["amzn-ami-hvm-*-x86_64-ebs"]}])
+    owners=["amazon"],
+    filters=[{"name":"name","values":["amzn2-ami-k*-hvm-*-x86_64-gp2"]}])
 ```
 
 Next, create an AWS security group. This enables `ping` over ICMP and HTTP traffic on port 80:
