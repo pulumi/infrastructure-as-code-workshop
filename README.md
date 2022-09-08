@@ -1,3 +1,8 @@
+# This repo is being deprecated in favor of https://github.com/pulumi/workshops.
+![deprecated](https://img.shields.io/badge/repo%20status-deprecated-red)
+
+The workshops in this repo have been moved over to that repo and placed in the archive as newer workshops based off these workshops have been generated.
+
 # Infrastructure as Code Workshops
 
 This repo contains workshops for getting started with Pulumi through a series of hands-on labs. The workshops are organized by cloud provider and then separated into language specific workshops.
