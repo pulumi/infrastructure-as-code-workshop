@@ -28,3 +28,43 @@ export const vpc_id = myvpc.vpcId;
 export const vpc_natgateways = myvpc.natGateways[0].id;
 export const vpc_public_subnetids = myvpc.publicSubnetIds;
 export const vpc_private_subnetids = myvpc.privateSubnetIds;
+
+const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
+    vpcId:myvpc.vpcId,
+    ingress: [
+        { protocol: "tcp", 
+          fromPort: 443, 
+          toPort: 443, 
+          cidrBlocks: ["0.0.0.0/0"],
+          description: "Allow inbound access via https" 
+        },
+        { 
+        protocol: "tcp", 
+        fromPort: 80, 
+        toPort: 80, 
+        cidrBlocks: ["0.0.0.0/0"],
+        description: "Allow inbound access via http" 
+      },
+    ],
+    egress: [
+      { protocol: "tcp", 
+          fromPort: 443, 
+          toPort: 443, 
+          cidrBlocks: ["0.0.0.0/0"],
+          description: "Allow outbound access via https" 
+        },
+        { 
+        protocol: "tcp", 
+        fromPort: 80, 
+        toPort: 80, 
+        cidrBlocks: ["0.0.0.0/0"],
+        description: "Allow outbound access via http" 
+      },
+  ],
+  tags: {"Name": `${name}-securitygroup`},
+}, { parent: myvpc, dependsOn: myvpc });
+
+export const security_group_name = mysecuritygroup.id;
+export const security_group_vpc = mysecuritygroup.vpcId;
+export const security_group_egress = mysecuritygroup.egress;
+export const security_group_ingress = mysecuritygroup.ingress;
