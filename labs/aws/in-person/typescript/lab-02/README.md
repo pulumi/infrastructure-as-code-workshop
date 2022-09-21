@@ -6,7 +6,7 @@ zone in your region, and then add a load balancer to spread load across the enti
 > This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete parts [1](../lab-01/01-creating-a-new-project.md) 
 >and [2](../lab-01/02-configuring-aws.md) of lab-01.
 
-## Step 1 &mdash;  Declare the VM
+## Step 1 &mdash;  Get the AMI for the VM
 
 Import the AWS package in an empty `index.ts` file:
 
@@ -17,12 +17,123 @@ import * as aws from "@pulumi/aws";
 Now dynamically query the Amazon Linux machine image. Doing this in code avoids needing to hard-code the machine image (a.k.a., its AMI):
 
 ```typescript
-const ami = aws.ec2.getAmi({
+const myami = aws.ec2.getAmi({
     filters: [{ name: "name", values: ["amzn2-ami-k*-hvm-*-x86_64-gp2"] }],
     owners: [ "amazon" ],
     mostRecent: true,
 }).then(ami => ami.id);
 ```
+Next, we want to export the ami to see what it is
+
+```typescript
+export const ami_id = myami;
+```
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step1.ts).
+
+Now deploy the changes:
+```bash
+pulumi up
+```
+
+Notice the ami_id `Output` has way more information than we want
+```
+View Live: https://app.pulumi.com/myuser/my-iac-demo2/dev/previews/a707d964-adce-43f4-8e98-a1b36d45dabc
+
+     Type                 Name              Plan       
+ +   pulumi:pulumi:Stack  my-iac-demo2-dev  create     
+ 
+Outputs:
+    ami_id: {
+        architecture       : "x86_64"
+        arn                : "arn:aws:ec2:us-east-2::image/ami-0568773882d492fc8"
+        blockDeviceMappings: [
+            [0]: {
+                deviceName : "/dev/xvda"
+                ebs        : {
+                    delete_on_termination: "true"
+                    encrypted            : "false"
+                    iops                 : "0"
+                    snapshot_id          : "snap-0eb18291b5565e22a"
+                    throughput           : "0"
+                    volume_size          : "8"
+                    volume_type          : "gp2"
+                }
+            }
+        ]
+        creationDate       : "2022-08-17T23:46:15.000Z"
+        deprecationTime    : "2024-08-17T23:46:15.000Z"
+        description        : "Amazon Linux 2 Kernel 5.10 AMI 2.0.20220805.0 x86_64 HVM gp2"
+        enaSupport         : true
+        filters            : [
+            [0]: {
+                name  : "name"
+                values: [
+                    [0]: "amzn2-ami-k*-hvm-*-x86_64-gp2"
+                ]
+            }
+        ]
+        hypervisor         : "xen"
+        id                 : "ami-0568773882d492fc8"
+        imageId            : "ami-0568773882d492fc8"
+        imageLocation      : "amazon/amzn2-ami-kernel-5.10-hvm-2.0.20220805.0-x86_64-gp2"
+        imageOwnerAlias    : "amazon"
+        imageType          : "machine"
+        includeDeprecated  : false
+        mostRecent         : true
+        name               : "amzn2-ami-kernel-5.10-hvm-2.0.20220805.0-x86_64-gp2"
+        ownerId            : "137112412989"
+        owners             : [
+            [0]: "amazon"
+        ]
+        platformDetails    : "Linux/UNIX"
+        public             : true
+        rootDeviceName     : "/dev/xvda"
+        rootDeviceType     : "ebs"
+        rootSnapshotId     : "snap-0eb18291b5565e22a"
+        sriovNetSupport    : "simple"
+        state              : "available"
+        stateReason        : {
+            code   : "UNSET"
+            message: "UNSET"
+        }
+        usageOperation     : "RunInstances"
+        virtualizationType : "hvm"
+    }
+
+Resources:
+    + 1 to create
+```
+
+Say `NO` and let us update the output.
+Append the following to the end of the export ami_id
+`.then(ami=>ami.id)`
+so that it now looks like the following:
+```typescript
+export const ami_id = myami.then(ami=>ami.id);
+```
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step2.ts).
+
+Now deploy the changes:
+```bash
+pulumi up
+```
+
+```
+     Type                 Name              Status      
+ +   pulumi:pulumi:Stack  my-iac-demo2-dev  created     
+ 
+Outputs:
+    ami_id: "ami-0568773882d492fc8"
+
+Resources:
+    + 1 create
+
+```
+Notice the ami_id `Output` has exactly what we want, the **ami_id**. Make sure to select **yes** this time.
+
+To create the VM we first need a vpc. We create a vpc with the [awsx](https://www.pulumi.com/registry/packages/awsx/) package.
+
 
 Next, create an AWS security group. This enables `ping` over ICMP and HTTP traffic on port 80:
 
