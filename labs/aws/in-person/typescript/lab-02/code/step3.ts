@@ -1,31 +1,30 @@
 import * as aws from "@pulumi/aws";
+import * as awsx from "@pulumi/awsx";
 
-const ami = aws.ec2.getAmi({
+// get Function for AMI
+const myami = aws.ec2.getAmi({
     filters: [{ name: "name", values: ["amzn2-ami-k*-hvm-*-x86_64-gp2"] }],
     owners: [ "amazon" ],
     mostRecent: true,
-}).then(ami => ami.id);
-
-const sg = new aws.ec2.SecurityGroup("web-secgrp", {
-    ingress: [
-        { protocol: "icmp", fromPort: 8, toPort: 0, cidrBlocks: ["0.0.0.0/0"] },
-        { protocol: "tcp", fromPort: 80, toPort: 80, cidrBlocks: ["0.0.0.0/0"] },
-    ],
 });
 
-export const ips: any[] = [];
-export const hostnames: any[] = [];
-for (const az of aws.getAvailabilityZones().names) {
-    const server = new aws.ec2.Instance(`web-server-${az}`, {
-        instanceType: "t2.micro",
-        securityGroups: [ sg.name ],
-        ami: ami,
-        availabilityZone: az,
-        userData: "#!/bin/bash\n"+
-            `echo 'Hello, World -- from ${az}!' > index.html\n` +
-            "nohup python -m SimpleHTTPServer 80 &",
-        tags: { "Name": "web-server" },
-    });
-    ips.push(server.publicIp);
-    hostnames.push(server.publicDns);
-}
+// Exporting AMI_ID
+export const ami_id = myami.then(ami=>ami.id);
+
+// Variable we will use for naming purpose
+const name = "demo";
+
+// Creating a VPC with a Single Nat Gateway  Strategy (To save cost)
+const myvpc = new awsx.ec2.Vpc(`${name}-vpc`, {
+    cidrBlock: "10.0.0.0/24",
+    numberOfAvailabilityZones: 3,
+    natGateways: {
+      strategy: "Single", // This is mainly to save cost. You do this only in dev
+    },
+  });
+
+// VPC Outputs
+export const vpc_id = myvpc.vpcId;
+export const vpc_natgateways = myvpc.natGateways[0].id;
+export const vpc_public_subnetids = myvpc.publicSubnetIds;
+export const vpc_private_subnetids = myvpc.privateSubnetIds;

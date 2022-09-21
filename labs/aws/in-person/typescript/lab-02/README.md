@@ -36,7 +36,7 @@ Now deploy the changes:
 pulumi up
 ```
 
-Notice the ami_id `Output` has way more information than we want
+Notice that the Output `ami_id` contains more information than we want. We only need the *id*
 ```
 View Live: https://app.pulumi.com/myuser/my-iac-demo2/dev/previews/a707d964-adce-43f4-8e98-a1b36d45dabc
 
@@ -130,11 +130,80 @@ Resources:
     + 1 create
 
 ```
-Notice the ami_id `Output` has exactly what we want, the **ami_id**. Make sure to select **yes** this time.
+Notice that the Output  `ami_id` has exactly what we want: the **ami_id**. Make sure to select **yes** this time.
 
-To create the VM we first need a vpc. We create a vpc with the [awsx](https://www.pulumi.com/registry/packages/awsx/) package.
+## Step 3 &mdash;  Create the VPC and subnets.
 
+Before we create the VM we need a vpc. We create a vpc with the [awsx](https://www.pulumi.com/registry/packages/awsx/) package.
 
+Append the following awsx package to the `package.json` file:
+```typescript
+ "@pulumi/awsx": "^1.0.0-beta.10"
+```
+
+Now in your terminal run:
+`npm update`
+
+Next we will following code near the top of the `index.ts` file:
+Add the following under the last `import` at the top of the file.
+
+```typescript
+import * as awsx from "@pulumi/awsx";
+```
+
+Next add the name prefix below the last item in the `index.ts`
+
+```typescript
+// Variable we will use for naming purpose
+const name = "demo";
+```
+We will use this throughout for naming purposes
+
+Next add the vpc block below the name
+```typescript
+// Creating a VPC with a Single Nat Gateway  Strategy (To save cost)
+const myvpc = new awsx.ec2.Vpc(`${name}-vpc`, {
+  cidrBlock: "10.0.0.0/24",
+  numberOfAvailabilityZones: 3,
+  natGateways: {
+    strategy: "Single", # This is mainly to save cost. You do this only in dev
+  },
+});
+```
+
+Next we are going to add outputs since we want to know what gets created to use later.
+```typescript
+// VPC Outputs
+export const vpc_id = myvpc.vpcId;
+export const vpc_natgateways = myvpc.natGateways[0].id;
+export const vpc_public_subnetids = myvpc.publicSubnetIds;
+export const vpc_private_subnetids = myvpc.privateSubnetIds;
+```
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step3.ts).
+
+Now deploy the changes:
+```bash
+pulumi up
+```
+
+Let's view the outputs
+```bash
+pulumi up
+```
+
+Results
+```
+Current stack outputs (5):
+    OUTPUT                 VALUE
+    ami_id                 ami-0c2ab3b8efb09f272
+    vpc_id                 vpc-0a42558d3b1ec37f3
+    vpc_natgateways        nat-0a8ec79b65d13aeb6
+    vpc_private_subnetids  ["subnet-07d2f9cff6e43c28e","subnet-05393e8a549e289ae","subnet-05eff8502af603d17"]
+    vpc_public_subnetids   ["subnet-04cdf6ac58555b181","subnet-0ad17e2c8aa2f307f","subnet-035553db34c334ca5"]
+```
+
+So that your
 Next, create an AWS security group. This enables `ping` over ICMP and HTTP traffic on port 80:
 
 ```typescript
