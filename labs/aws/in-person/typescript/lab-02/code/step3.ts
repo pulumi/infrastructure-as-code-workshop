@@ -1,3 +1,4 @@
+import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 import * as awsx from "@pulumi/awsx";
 
@@ -18,6 +19,7 @@ const name = "demo";
 const myvpc = new awsx.ec2.Vpc(`${name}-vpc`, {
     cidrBlock: "10.0.0.0/24",
     numberOfAvailabilityZones: 3,
+    enableDnsHostnames: true,
     natGateways: {
       strategy: "Single", // This is mainly to save cost. You do this only in dev
     },
@@ -36,14 +38,16 @@ const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
           fromPort: 443, 
           toPort: 443, 
           cidrBlocks: ["0.0.0.0/0"],
-          description: "Allow inbound access via https" 
+          description: "Allow inbound access via https",
+          self: true,
         },
         { 
         protocol: "tcp", 
         fromPort: 80, 
         toPort: 80, 
-        cidrBlocks: ["0.0.0.0/0"],
-        description: "Allow inbound access via http" 
+        //cidrBlocks: ["0.0.0.0/0"],
+        description: "Allow inbound access via http",
+        self: true, 
       },
     ],
     egress: [

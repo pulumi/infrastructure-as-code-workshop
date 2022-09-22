@@ -18,6 +18,7 @@ const name = "demo";
 const myvpc = new awsx.ec2.Vpc(`${name}-vpc`, {
     cidrBlock: "10.0.0.0/24",
     numberOfAvailabilityZones: 3,
+    enableDnsHostnames: true,
     natGateways: {
       strategy: "Single", // This is mainly to save cost. You do this only in dev
     },

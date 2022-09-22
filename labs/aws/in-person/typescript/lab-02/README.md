@@ -165,6 +165,7 @@ Next add the vpc block below the name
 const myvpc = new awsx.ec2.Vpc(`${name}-vpc`, {
   cidrBlock: "10.0.0.0/24",
   numberOfAvailabilityZones: 3,
+  enableDnsHostnames: true,
   natGateways: {
     strategy: "Single", # This is mainly to save cost. You do this only in dev
   },
@@ -214,15 +215,17 @@ const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
         { protocol: "tcp", 
           fromPort: 443, 
           toPort: 443, 
-          cidrBlocks: ["0.0.0.0/0"],
-          description: "Allow inbound access via https" 
+          //cidrBlocks: ["0.0.0.0/0"],
+          description: "Allow inbound access via https",
+          self: true, 
         },
         { 
         protocol: "tcp", 
         fromPort: 80, 
         toPort: 80, 
-        cidrBlocks: ["0.0.0.0/0"],
-        description: "Allow inbound access via http" 
+        //cidrBlocks: ["0.0.0.0/0"],
+        description: "Allow inbound access via http" ,
+        self: true,
       },
     ],
     egress: [
@@ -299,55 +302,38 @@ const myserver = new aws.ec2.Instance(`${name}-web-server`, {
 });
 ```
 
-> For most real-world applications, you would want to create a dedicated image for your application, rather than embedding the script in your code like this.
-
-Add the outputs.  Notice, that the get the hostname, we are getting the tags on the server,
-since hostname is empty.
+Finally export the VM's resulting IP address and instance_id
 
 ```typescript
 export const ip = myserver.publicIp;
-export const hostname = myserver.tags.apply(myname=>myname);
+export const hostname = myserver.publicDns;
 ```
 
 > For most real-world applications, you would want to create a dedicated image for your application, rather than embedding the script in your code like this.
 
-Finally export the VM's resulting IP address and hostname:
-
-```typescript
-export const ip = server.publicIp;
-export const hostname = server.publicDns;
-```
-
 > :white_check_mark: After this change, your `index.ts` should [look like this](./code/step5.ts).
 
-## Step 2 &mdash; Provision the VM and Access It
-
-To provision the VM, run:
-
+Now deploy the changes:
 ```bash
 pulumi up
 ```
 
-After confirming, you will see output like the following:
-
 ```
-Updating (dev):
+View Live: https://app.pulumi.com/myuser/my-iac-thursday-demo2/dev/updates/56
 
-     Type                      Name              Status
- +   pulumi:pulumi:Stack       iac-workshop-dev  created
- +   ├─ aws:ec2:SecurityGroup  web-secgrp        created
- +   └─ aws:ec2:Instance       web-server        created
-
+     Type                 Name                       Status      
+     pulumi:pulumi:Stack  my-iac-thursday-demo2-dev              
+ +   └─ aws:ec2:Instance  demo-web-server            created     
+ 
 Outputs:
-    hostname: "ec2-52-57-250-206.eu-central-1.compute.amazonaws.com"
-    ip      : "52.57.250.206"
+  + hostname              : "ec2-3-139-83-244.us-east-2.compute.amazonaws.com"
+  + ip                    : "3.139.83.244"
 
 Resources:
-    + 3 created
+    + 1 created
+    31 unchanged
 
-Duration: 40s
-
-Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/1
+Duration: 46s
 ```
 
 To verify that our server is accepting requests properly, curl either the hostname or IP address:
