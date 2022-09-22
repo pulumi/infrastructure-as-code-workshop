@@ -349,8 +349,8 @@ Either way you should see a response from the Python webserver:
 Hello, World!
 ```
 
-## Step 3 – Create Multiple Virtual Machines
-
+## Step 6 – Create Multiple Virtual Machines
+EVERYTHING FROM HERE DOWN IS PENDING A REDO.  NEED TO VALIDATE THESE STEPS.
 Now you will create multiple VM instances, each running the same Python webserver, across all AWS availability zones in
 your region. Replace the part of your code that creates the webserver and exports the resulting IP address and hostname with the following:
 
