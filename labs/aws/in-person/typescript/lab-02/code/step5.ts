@@ -39,15 +39,15 @@ const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
           toPort: 443, 
           cidrBlocks: ["0.0.0.0/0"],
           description: "Allow inbound access via https",
-          self: true,
+          self: true, // Add the securitygroup itself as a source
         },
         { 
         protocol: "tcp", 
         fromPort: 80, 
         toPort: 80, 
-        //cidrBlocks: ["0.0.0.0/0"],
+        cidrBlocks: ["0.0.0.0/0"],
         description: "Allow inbound access via http",
-        self: true, 
+        self: true, // Add the securitygroup itself as a source
       },
     ],
     egress: [

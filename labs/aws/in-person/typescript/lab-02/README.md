@@ -144,7 +144,7 @@ Append the following awsx package to the `package.json` file:
 Now in your terminal run:
 `npm update`
 
-Next we will following code near the top of the `index.ts` file:
+Next we will add the following code near the top of the `index.ts` file:
 Add the following under the last `import` at the top of the file.
 
 ```typescript
@@ -167,7 +167,7 @@ const myvpc = new awsx.ec2.Vpc(`${name}-vpc`, {
   numberOfAvailabilityZones: 3,
   enableDnsHostnames: true,
   natGateways: {
-    strategy: "Single", # This is mainly to save cost. You do this only in dev
+    strategy: "Single", # This is mainly to save cost on nat. You do this only in dev
   },
 });
 ```
@@ -190,7 +190,7 @@ pulumi up
 
 Let's view the outputs
 ```bash
-pulumi up
+pulumi stack output
 ```
 
 Results
@@ -206,7 +206,7 @@ Current stack outputs (5):
 
 ## Step 3 &mdash;  Create the SecurityGroup in the VPC that we made.
 
-Add the code block below the vpc outputs.
+Add the following code block below the vpc outputs in the `index.ts`.
 
 ```typescript
 const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
@@ -215,17 +215,17 @@ const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
         { protocol: "tcp", 
           fromPort: 443, 
           toPort: 443, 
-          //cidrBlocks: ["0.0.0.0/0"],
+          cidrBlocks: ["0.0.0.0/0"],
           description: "Allow inbound access via https",
-          self: true, 
+          self: true,  // Add the securitygroup itself as a source
         },
         { 
         protocol: "tcp", 
         fromPort: 80, 
         toPort: 80, 
-        //cidrBlocks: ["0.0.0.0/0"],
+        cidrBlocks: ["0.0.0.0/0"],
         description: "Allow inbound access via http" ,
-        self: true,
+        self: true, // Add the securitygroup itself as a source
       },
     ],
     egress: [
@@ -262,6 +262,7 @@ Now deploy the changes:
 ```bash
 pulumi up
 ```
+
 The key part is to make sure that the security group is created in the vpc. Also, we
 you must use securitygroup instead of securitygrouprules(otherwise, this will create/delete on every update)
 
@@ -280,7 +281,7 @@ Next add the following to the very bottom of the **index.ts** file.
 ```typescript
 export const subnet_for_server = pulumi.interpolate`${vpc_public_subnetids[0]}`;
 ```
-We are exporting it so we can see the value in it.
+We are exporting it so we can see the value in it. No new resources are created, only an additional output is added
 
 Now deploy the changes:
 ```bash
