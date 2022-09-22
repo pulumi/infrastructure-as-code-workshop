@@ -112,7 +112,7 @@ so that it now looks like the following:
 ```typescript
 export const ami_id = myami.then(ami=>ami.id);
 ```
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step2.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step1_5.ts).
 
 Now deploy the changes:
 ```bash
@@ -132,7 +132,7 @@ Resources:
 ```
 Notice that the Output  `ami_id` has exactly what we want: the **ami_id**. Make sure to select **yes** this time.
 
-## Step 3 &mdash;  Create the VPC and subnets.
+## Step 2 &mdash;  Create the VPC and subnets.
 
 Before we create the VM we need a vpc. We create a vpc with the [awsx](https://www.pulumi.com/registry/packages/awsx/) package.
 
@@ -180,7 +180,7 @@ export const vpc_public_subnetids = myvpc.publicSubnetIds;
 export const vpc_private_subnetids = myvpc.privateSubnetIds;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step3.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step2.ts).
 
 Now deploy the changes:
 ```bash
@@ -203,30 +203,110 @@ Current stack outputs (5):
     vpc_public_subnetids   ["subnet-04cdf6ac58555b181","subnet-0ad17e2c8aa2f307f","subnet-035553db34c334ca5"]
 ```
 
-So that your
-Next, create an AWS security group. This enables `ping` over ICMP and HTTP traffic on port 80:
+## Step 3 &mdash;  Create the SecurityGroup in the VPC that we made.
+
+Add the code block below the vpc outputs.
 
 ```typescript
-const sg = new aws.ec2.SecurityGroup("web-secgrp", {
+const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
+    vpcId:myvpc.vpcId,
     ingress: [
-        { protocol: "icmp", fromPort: 8, toPort: 0, cidrBlocks: ["0.0.0.0/0"] },
-        { protocol: "tcp", fromPort: 80, toPort: 80, cidrBlocks: ["0.0.0.0/0"] },
+        { protocol: "tcp", 
+          fromPort: 443, 
+          toPort: 443, 
+          cidrBlocks: ["0.0.0.0/0"],
+          description: "Allow inbound access via https" 
+        },
+        { 
+        protocol: "tcp", 
+        fromPort: 80, 
+        toPort: 80, 
+        cidrBlocks: ["0.0.0.0/0"],
+        description: "Allow inbound access via http" 
+      },
     ],
+    egress: [
+      { protocol: "tcp", 
+          fromPort: 443, 
+          toPort: 443, 
+          cidrBlocks: ["0.0.0.0/0"],
+          description: "Allow outbound access via https" 
+        },
+        { 
+        protocol: "tcp", 
+        fromPort: 80, 
+        toPort: 80, 
+        cidrBlocks: ["0.0.0.0/0"],
+        description: "Allow outbound access via http" 
+      },
+  ],
+  tags: {"Name": `${name}-securitygroup`},
+}, { parent: myvpc, dependsOn: myvpc });
+```
+
+We also want to update the outputs to validate that we are creating everything in the right place. Add the following below the code block above.
+
+```typescript
+export const security_group_name = mysecuritygroup.id;
+export const security_group_vpc = mysecuritygroup.vpcId;
+export const security_group_egress = mysecuritygroup.egress;
+export const security_group_ingress = mysecuritygroup.ingress;
+```
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step3.ts).
+
+Now deploy the changes:
+```bash
+pulumi up
+```
+The key part is to make sure that the security group is created in the vpc. Also, we
+you must use securitygroup instead of securitygrouprules(otherwise, this will create/delete on every update)
+
+## Step 4 &mdash;  Figure out the Subnet via Interpolation
+
+The vm will need a subnet to place this in.  We need to use [Interpolation](https://www.pulumi.com/docs/intro/concepts/inputs-outputs/#outputs-and-strings)
+Interpolation allows us to concatenate string outputs with other strings directly to figure it out.
+Place the following block of code below the *security_group_ingress* outputs
+
+Add the following line to the very top of the **index.ts** file.
+```typescript
+import * as pulumi from "@pulumi/pulumi";
+```
+
+Next add the following to the very bottom of the **index.ts** file.
+```typescript
+export const subnet_for_server = pulumi.interpolate`${vpc_public_subnetids[0]}`;
+```
+We are exporting it so we can see the value in it.
+
+Now deploy the changes:
+```bash
+pulumi up
+```
+## Step 5 &mdash;  Create a virtual machine with the security group above in the vpc and subnet we create.
+
+```typescript
+const myserver = new aws.ec2.Instance(`${name}-web-server`, {
+  ami: ami_id,
+  instanceType: "t2.nano",
+  subnetId: subnet_for_server,
+  vpcSecurityGroupIds: [mysecuritygroup.id],
+  tags: { Name: `${name}-web-server` },
+  userData:
+    "#!/bin/bash\n" +
+    "echo 'Hello, World!' > index.html\n" +
+    "nohup python -m SimpleHTTPServer 80 &",
 });
 ```
 
-Create the server. Notice it has a startup script that spins up a simple Python webserver:
+> For most real-world applications, you would want to create a dedicated image for your application, rather than embedding the script in your code like this.
+
+Add the outputs.  Notice, that the get the hostname, we are getting the tags on the server,
+since hostname is empty.
 
 ```typescript
-const server = new aws.ec2.Instance("web-server", {
-    instanceType: "t2.micro",
-    securityGroups: [ sg.name ],
-    ami: ami,
-    userData: "#!/bin/bash\n"+
-        "echo 'Hello, World!' > index.html\n" +
-        "nohup python -m SimpleHTTPServer 80 &",
-    tags: { "Name": "web-server" },
-});
+export const ip = myserver.publicIp;
+export const hostname = myserver.tags.apply(myname=>myname);
 ```
 
 > For most real-world applications, you would want to create a dedicated image for your application, rather than embedding the script in your code like this.
@@ -238,7 +318,7 @@ export const ip = server.publicIp;
 export const hostname = server.publicDns;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step1.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step5.ts).
 
 ## Step 2 &mdash; Provision the VM and Access It
 
