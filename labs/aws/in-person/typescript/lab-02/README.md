@@ -136,7 +136,7 @@ Notice that the Output  `ami_id` has exactly what we want: the **ami_id**. Make 
 
 Before we create the VM we need a vpc. We create a vpc with the [awsx](https://www.pulumi.com/registry/packages/awsx/) package.
 
-Append the following awsx package to the `package.json` file:
+Add the following awsx package to the `package.json` file:
 ```typescript
  "@pulumi/awsx": "^1.0.0-beta.10"
 ```
@@ -144,14 +144,14 @@ Append the following awsx package to the `package.json` file:
 Now in your terminal run:
 `npm update`
 
-Next we will add the following code near the top of the `index.ts` file:
+Next, we add the following code near the top of the `index.ts` file:
 Add the following under the last `import` at the top of the file.
 
 ```typescript
 import * as awsx from "@pulumi/awsx";
 ```
 
-Next add the name prefix below the last item in the `index.ts`
+Next add the *name* variable below the last item in the `index.ts`
 
 ```typescript
 // Variable we will use for naming purpose
@@ -159,7 +159,7 @@ const name = "demo";
 ```
 We will use this throughout for naming purposes
 
-Next add the vpc block below the name
+Next add the vpc block below the **name**
 ```typescript
 // Creating a VPC with a Single Nat Gateway  Strategy (To save cost)
 const myvpc = new awsx.ec2.Vpc(`${name}-vpc`, {
@@ -172,7 +172,7 @@ const myvpc = new awsx.ec2.Vpc(`${name}-vpc`, {
 });
 ```
 
-Next we are going to add outputs since we want to know what gets created to use later.
+Next we add outputs to view what we have created. These will be reference again later in the program.
 ```typescript
 // VPC Outputs
 export const vpc_id = myvpc.vpcId;
@@ -188,7 +188,7 @@ Now deploy the changes:
 pulumi up
 ```
 
-Let's view the outputs
+View the outputs
 ```bash
 pulumi stack output
 ```
@@ -217,7 +217,7 @@ const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
           toPort: 443, 
           cidrBlocks: ["0.0.0.0/0"],
           description: "Allow inbound access via https",
-          self: true,  // Add the securitygroup itself as a source
+          self: true,  // Add the securitygroup itself as a source. This will create another rule
         },
         { 
         protocol: "tcp", 
@@ -225,7 +225,7 @@ const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
         toPort: 80, 
         cidrBlocks: ["0.0.0.0/0"],
         description: "Allow inbound access via http" ,
-        self: true, // Add the securitygroup itself as a source
+        self: true, // Add the securitygroup itself as a source. This will create another rule
       },
     ],
     egress: [
@@ -247,7 +247,7 @@ const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
 }, { parent: myvpc, dependsOn: myvpc });
 ```
 
-We also want to update the outputs to validate that we are creating everything in the right place. Add the following below the code block above.
+Update the outputs to validate that everything is correct.  Add the following code after the above code block.
 
 ```typescript
 // Exporting security group outputs
@@ -259,15 +259,14 @@ export const security_group_ingress = mysecuritygroup.ingress;
 
 > :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step3.ts).
 
-Now deploy the changes:
+Deploy the changes:
 ```bash
 pulumi up
 ```
 
-The key part is to make sure that the security group is created in the vpc. Also, we
-you must use securitygroup instead of securitygrouprules(otherwise, this will create/delete on every update)
+The important part is that the security group is created in our vpc and not in the `default` vpc. Wemust use securitygroup instead of securitygrouprules(otherwise, this securitygrouprules will create/delete on every update)
 
-## Step 4 &mdash;  Figure out the Subnets via Interpolation
+## Step 4 &mdash;  Extract the the Subnets via Interpolation
 
 The vm will need a subnet to place this in.  We need to use [Interpolation](https://www.pulumi.com/docs/intro/concepts/inputs-outputs/#outputs-and-strings)
 Interpolation allows us to concatenate string outputs with other strings directly to figure it out.
@@ -280,7 +279,6 @@ import * as pulumi from "@pulumi/pulumi";
 ```
 
 Next add the following to the very bottom of the **index.ts** file.
-Note: the **even** subnets are public, **odd** ones are private.
 ```typescript
 // Public Subnets
 export const public_subnet1 = pulumi.interpolate`${vpc_public_subnetids[0]}`;
@@ -292,13 +290,14 @@ export const private_subnet1 = pulumi.interpolate`${vpc_private_subnetids[0]}`;
 export const private_subnet2 = pulumi.interpolate`${vpc_private_subnetids[1]}`;
 export const private_subnet3 = pulumi.interpolate`${vpc_private_subnetids[2]}`;
 ```
-We are exporting it so we can see the value in it. No new resources are created, only  additional outputs are added
 
-Now deploy the changes:
+We are exporting outputs, no new resources are created.
+
+Deploy the changes:
 ```bash
 pulumi up
 ```
-## Step 5 &mdash;  Create a virtual machine with the security group above in the vpc and subnet we create.
+## Step 5 &mdash;  Create a virtual machine with our existing security group, vpc and subnet.
 
 ```typescript
 const myserver = new aws.ec2.Instance(`${name}-web-server`, {
@@ -314,7 +313,7 @@ const myserver = new aws.ec2.Instance(`${name}-web-server`, {
 });
 ```
 
-Finally export the VM's resulting IP address and instance_id
+Export the VM's resulting IP address and DNS
 
 ```typescript
 export const ip = myserver.publicIp;
@@ -397,7 +396,7 @@ Now run a command to update your stack with the new resource definitions:
 pulumi up
 ```
 
-You will see 3 servers created and 1 server deleted.  Note that **create** happens before **delete**:
+You will see 3 servers created.
 
 ```
 View Live: https://app.pulumi.com/shaht/my-iac-thursday-demo2/dev/updates/66
@@ -433,8 +432,6 @@ Duration: 1m17s
 View Live: https://app.pulumi.com/shaht/my-iac-thursday-demo2/dev/updates/66
 ```
 
-Notice that your original server was deleted and new ones created in its place, because its name changed.
-
 To test the changes, curl any of the resulting IP addresses or hostnames:
 
 ```bash
@@ -455,9 +452,9 @@ Hello, World!
 
 Needing to loop over the webservers isn't very realistic. You will now create a load balancer over them to distribute load evenly.
 
-Now via the AWSX package, a collection of helpers that makes things like configuring load balancing easier:
+Via the AWSX package, a collection of helpers that makes things like configuring load balancing easier:
 
-Now right after the security group creation, and before the new VM creation block, add the load balancer creation:
+Right after the security group creation, and before the new VM creation block, add the load balancer creation:
 
 ```typescript
 ...
@@ -474,13 +471,12 @@ export const application_load_balancer = alb.loadBalancer;
 ...
 ```
 
-In the ec2 instance servers block, add the following *TargetGroupAttachment* under
+In the *const myserver = new aws.ec2.Instance* block, add the following *TargetGroupAttachment* under
 the **hostname.push** section
 
 ```typescript
 ...
 ..
-    ips.push(server.publicIp);
     hostnames.push(server.publicDns);
 
     // Adding TargetGroupAttachment to servers.
@@ -492,8 +488,8 @@ the **hostname.push** section
 ```
 
 Add the loadbalancer url to the end of the **index.ts*
-typescript
-```
+
+```typescript
 export const url = listener.endpoint.hostname;
 ```
 
