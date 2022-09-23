@@ -92,7 +92,6 @@ export const private_subnet1 = pulumi.interpolate`${vpc_private_subnetids[0]}`;
 export const private_subnet2 = pulumi.interpolate`${vpc_private_subnetids[1]}`;
 export const private_subnet3 = pulumi.interpolate`${vpc_private_subnetids[2]}`;
 
-/* Comment out this block of code, replaced by multiple ec3 servers
 const myserver = new aws.ec2.Instance(`${name}-web-server`, {
   ami: ami_id,
   instanceType: "t2.nano",
@@ -107,12 +106,12 @@ const myserver = new aws.ec2.Instance(`${name}-web-server`, {
 
 export const ip = myserver.publicIp;
 export const hostname = myserver.publicDns;
-*/
 
 // Ec2 servers spread across each az(public in this case)
 export const ips: any[] = [];
 export const hostnames: any[] = [];
 
+//for (let z = 0; z < 3; z++ ) // In case you want more number of servers per az
   for (let x = 0; x < 3; x++ ) {
     const myserver = new aws.ec2.Instance(`${name}-web-server-${x}`, {
       ami: ami_id,
