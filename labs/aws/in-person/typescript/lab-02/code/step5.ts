@@ -31,6 +31,7 @@ export const vpc_natgateways = myvpc.natGateways[0].id;
 export const vpc_public_subnetids = myvpc.publicSubnetIds;
 export const vpc_private_subnetids = myvpc.privateSubnetIds;
 
+// Creating Security Group within VPC
 const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
     vpcId:myvpc.vpcId,
     ingress: [
@@ -68,17 +69,26 @@ const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
   tags: {"Name": `${name}-securitygroup`},
 }, { parent: myvpc, dependsOn: myvpc });
 
+// Exporting security group outputs
 export const security_group_name = mysecuritygroup.id;
 export const security_group_vpc = mysecuritygroup.vpcId;
 export const security_group_egress = mysecuritygroup.egress;
 export const security_group_ingress = mysecuritygroup.ingress;
 
-export const subnet_for_server = pulumi.interpolate`${vpc_public_subnetids[0]}`;
+// Public Subnets
+export const public_subnet1 = pulumi.interpolate`${vpc_public_subnetids[0]}`;
+export const public_subnet2 = pulumi.interpolate`${vpc_public_subnetids[1]}`;
+export const public_subnet3 = pulumi.interpolate`${vpc_public_subnetids[2]}`;
+
+// Private Subnets
+export const private_subnet1 = pulumi.interpolate`${vpc_private_subnetids[0]}`;
+export const private_subnet2 = pulumi.interpolate`${vpc_private_subnetids[1]}`;
+export const private_subnet3 = pulumi.interpolate`${vpc_private_subnetids[2]}`;
 
 const myserver = new aws.ec2.Instance(`${name}-web-server`, {
   ami: ami_id,
   instanceType: "t2.nano",
-  subnetId: subnet_for_server,
+  subnetId: public_subnet1,
   vpcSecurityGroupIds: [mysecuritygroup.id],
   tags: { Name: `${name}-web-server` },
   userData:

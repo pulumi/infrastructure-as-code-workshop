@@ -250,6 +250,7 @@ const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
 We also want to update the outputs to validate that we are creating everything in the right place. Add the following below the code block above.
 
 ```typescript
+// Exporting security group outputs
 export const security_group_name = mysecuritygroup.id;
 export const security_group_vpc = mysecuritygroup.vpcId;
 export const security_group_egress = mysecuritygroup.egress;
@@ -266,10 +267,11 @@ pulumi up
 The key part is to make sure that the security group is created in the vpc. Also, we
 you must use securitygroup instead of securitygrouprules(otherwise, this will create/delete on every update)
 
-## Step 4 &mdash;  Figure out the Subnet via Interpolation
+## Step 4 &mdash;  Figure out the Subnets via Interpolation
 
 The vm will need a subnet to place this in.  We need to use [Interpolation](https://www.pulumi.com/docs/intro/concepts/inputs-outputs/#outputs-and-strings)
 Interpolation allows us to concatenate string outputs with other strings directly to figure it out.
+
 Place the following block of code below the *security_group_ingress* outputs
 
 Add the following line to the very top of the **index.ts** file.
@@ -278,10 +280,19 @@ import * as pulumi from "@pulumi/pulumi";
 ```
 
 Next add the following to the very bottom of the **index.ts** file.
+Note: the **even** subnets are public, **odd** ones are private.
 ```typescript
-export const subnet_for_server = pulumi.interpolate`${vpc_public_subnetids[0]}`;
+// Public Subnets
+export const public_subnet1 = pulumi.interpolate`${vpc_public_subnetids[0]}`;
+export const public_subnet2 = pulumi.interpolate`${vpc_public_subnetids[1]}`;
+export const public_subnet3 = pulumi.interpolate`${vpc_public_subnetids[2]}`;
+
+// Private Subnets
+export const private_subnet1 = pulumi.interpolate`${vpc_private_subnetids[0]}`;
+export const private_subnet2 = pulumi.interpolate`${vpc_private_subnetids[1]}`;
+export const private_subnet3 = pulumi.interpolate`${vpc_private_subnetids[2]}`;
 ```
-We are exporting it so we can see the value in it. No new resources are created, only an additional output is added
+We are exporting it so we can see the value in it. No new resources are created, only  additional outputs are added
 
 Now deploy the changes:
 ```bash
@@ -293,7 +304,7 @@ pulumi up
 const myserver = new aws.ec2.Instance(`${name}-web-server`, {
   ami: ami_id,
   instanceType: "t2.nano",
-  subnetId: subnet_for_server,
+  subnetId: public_subnet1,
   vpcSecurityGroupIds: [mysecuritygroup.id],
   tags: { Name: `${name}-web-server` },
   userData:
@@ -350,31 +361,35 @@ Hello, World!
 ```
 
 ## Step 6 – Create Multiple Virtual Machines
-EVERYTHING FROM HERE DOWN IS PENDING A REDO.  NEED TO VALIDATE THESE STEPS.
-Now you will create multiple VM instances, each running the same Python webserver, across all AWS availability zones in
-your region. Replace the part of your code that creates the webserver and exports the resulting IP address and hostname with the following:
+Now you will create multiple VM instances, each running the same Python webserver, across all the AWS availability zones in your VPC. 
+
+
+Replace the part of your code that creates the webserver and exports the resulting IP address and hostname with the following:
 
 ```typescript
 ...
+// Ec2 servers spread across each az(public in this case)
 export const ips: any[] = [];
 export const hostnames: any[] = [];
-for (const az of aws.getAvailabilityZones().names) {
-    const server = new aws.ec2.Instance(`web-server-${az}`, {
-        instanceType: "t2.micro",
-        securityGroups: [ sg.name ],
-        ami: ami,
-        availabilityZone: az,
-        userData: "#!/bin/bash\n"+
-            `echo 'Hello, World -- from ${az}!' > index.html\n` +
-            "nohup python -m SimpleHTTPServer 80 &",
-        tags: { "Name": "web-server" },
-    });
-    ips.push(server.publicIp);
-    hostnames.push(server.publicDns);
-}
+
+  for (let x = 0; x < 3; x++ ) {
+    const myserver = new aws.ec2.Instance(`${name}-web-server-${x}`, {
+      ami: ami_id,
+      instanceType: "t2.nano",
+      subnetId: pulumi.interpolate`${vpc_public_subnetids[x]}`,
+      vpcSecurityGroupIds: [mysecuritygroup.id],
+      tags: { Name: `${name}-web-server-${x}` },
+      userData:
+        "#!/bin/bash\n" +
+        `echo 'Hello, World! -- from ${vpc_public_subnetids[x]}!' > index.html\n` +
+        "nohup python -m SimpleHTTPServer 80 &",
+    },{ dependsOn: mysecuritygroup });
+    ips.push(myserver.publicIp)
+    hostnames.push(myserver.publicDns)
+  }
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step3.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step6.ts).
 
 Now run a command to update your stack with the new resource definitions:
 
@@ -382,40 +397,40 @@ Now run a command to update your stack with the new resource definitions:
 pulumi up
 ```
 
-You will see output like the following:
+You will see 3 servers created and 1 server deleted.  Note that **create** happens before **delete**:
 
 ```
-Updating (dev):
+View Live: https://app.pulumi.com/shaht/my-iac-thursday-demo2/dev/updates/66
 
-     Type                 Name                      Status
-     pulumi:pulumi:Stack  iac-workshop-dev
- +   ├─ aws:ec2:Instance  web-server-eu-central-1a  created
- +   ├─ aws:ec2:Instance  web-server-eu-central-1b  created
- +   ├─ aws:ec2:Instance  web-server-eu-central-1c  created
- -   └─ aws:ec2:Instance  web-server                deleted
+     Type                 Name                       Status      
+     pulumi:pulumi:Stack  my-iac-thursday-demo2-dev              
+ +   ├─ aws:ec2:Instance  demo-web-server-2          created     
+ +   ├─ aws:ec2:Instance  demo-web-server-1          created     
+ +   ├─ aws:ec2:Instance  demo-web-server-0          created     
+ -   └─ aws:ec2:Instance  demo-web-server            deleted     
 
 Outputs:
-  + hostnames     : [
-  +     [0]: "ec2-18-197-184-46.eu-central-1.compute.amazonaws.com"
-  +     [1]: "ec2-18-196-225-191.eu-central-1.compute.amazonaws.com"
-  +     [2]: "ec2-35-158-83-62.eu-central-1.compute.amazonaws.com"
+  - hostname              : "ec2-3-143-235-154.us-east-2.compute.amazonaws.com"
+  + hostnames             : [
+  +     [0]: "ec2-3-144-90-22.us-east-2.compute.amazonaws.com"
+  +     [1]: "ec2-18-117-125-29.us-east-2.compute.amazonaws.com"
+  +     [2]: "ec2-3-16-151-71.us-east-2.compute.amazonaws.com"
     ]
-  + ips           : [
-  +     [0]: "18.197.184.46"
-  +     [1]: "18.196.225.191"
-  +     [2]: "35.158.83.62"
+  - ip                    : "3.143.235.154"
+  + ips                   : [
+  +     [0]: "3.144.90.22"
+  +     [1]: "18.117.125.29"
+  +     [2]: "3.16.151.71"
     ]
-  - publicHostname: "ec2-52-57-250-206.eu-central-1.compute.amazonaws.com"
-  - publicIp      : "52.57.250.206"
 
 Resources:
     + 3 created
     - 1 deleted
-    4 changes. 2 unchanged
+    4 changes. 31 unchanged
 
-Duration: 1m2s
+Duration: 1m17s
 
-Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/2
+View Live: https://app.pulumi.com/shaht/my-iac-thursday-demo2/dev/updates/66
 ```
 
 Notice that your original server was deleted and new ones created in its place, because its name changed.
