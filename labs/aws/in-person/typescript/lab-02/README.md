@@ -441,8 +441,6 @@ To test the changes, curl any of the resulting IP addresses or hostnames:
 for i in {0..2}; do curl $(pulumi stack output hostnames | jq -r ".[${i}]"); done
 ```
 
-> The count of servers depends on the number of AZs in your region. Adjust the `{0..2}` accordingly.
-
 > The `pulumi stack output` command emits JSON serialized data &mdash; hence the use of the `jq` tool to extract a specific index. If you don't have `jq`, don't worry; simply copy-and-paste the hostname or IP address from the console output and `curl` that.
 
 Note that the webserver number is included in its response:
@@ -453,21 +451,11 @@ Hello, World -- from eu-central-1b!
 Hello, World -- from eu-central-1c!
 ```
 
-## Step 4 &mdash; Create a Load Balancer
+## Step 7 &mdash; Create a Load Balancer
 
 Needing to loop over the webservers isn't very realistic. You will now create a load balancer over them to distribute load evenly.
 
-Now install the AWSX package, a collection of helpers that makes things like configuring load balancing easier:
-
-```bash
-npm install @pulumi/awsx
-```
-
-And import this package at the top of your program:
-
-```typescript
-import * as awsx from "@pulumi/awsx";
-```
+Now via the AWSX package, a collection of helpers that makes things like configuring load balancing easier:
 
 Delete the port 80 `ingress` rule from your security group, leaving behind only the ICMP rule:
 
@@ -487,6 +475,7 @@ Now right after the security group creation, and before the VM creation block, a
 
 ```typescript
 ...
+// Create alb
 const alb = new awsx.lb.ApplicationLoadBalancer("web-traffic", {
     external: true,
     securityGroups: [ sg.id ],

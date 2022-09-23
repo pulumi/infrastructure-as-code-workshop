@@ -50,6 +50,13 @@ const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
         description: "Allow inbound access via http",
         self: true, // Add the securitygroup itself as a source
       },
+      { 
+        protocol: "icmp", 
+        fromPort: 8, 
+        toPort: 0, 
+        cidrBlocks: ["0.0.0.0/0"],
+        description: "Required to ensure the security group ingress rules don't conlict with the load balancer's."
+      },
     ],
     egress: [
       { protocol: "tcp", 
