@@ -85,6 +85,16 @@ export const private_subnet1 = pulumi.interpolate`${vpc_private_subnetids[0]}`;
 export const private_subnet2 = pulumi.interpolate`${vpc_private_subnetids[1]}`;
 export const private_subnet3 = pulumi.interpolate`${vpc_private_subnetids[2]}`;
 
+// ALB via AWSX
+const alb = new awsx.lb.ApplicationLoadBalancer(`${name}-alb-web-traffic`, {
+  enableHttp2: true,
+  subnetIds: [public_subnet1,public_subnet2,public_subnet3],  // You have to pass in subnetsids otherwise this will get created in the default subnet.
+  securityGroups: [ mysecuritygroup.id ],  
+  listener: {port: 80},
+});
+
+export const application_load_balancer = alb.loadBalancer;
+
 // Single ec2 instance
 const myserver = new aws.ec2.Instance(`${name}-web-server`, {
   ami: ami_id,
@@ -100,3 +110,32 @@ const myserver = new aws.ec2.Instance(`${name}-web-server`, {
 
 export const ip = myserver.publicIp;
 export const hostname = myserver.publicDns;
+
+// Ec2 servers spread across each az(public in this case)
+export const ips: any[] = [];
+export const hostnames: any[] = [];
+
+//for (let z = 0; z < 3; z++ ) // In case you want more number of servers per az
+  for (let x = 0; x < 3; x++ ) {
+    const myserver = new aws.ec2.Instance(`${name}-web-server-${x}`, {
+      ami: ami_id,
+      instanceType: "t2.nano",
+      subnetId: pulumi.interpolate`${vpc_public_subnetids[x]}`,
+      vpcSecurityGroupIds: [mysecuritygroup.id],
+      tags: { Name: `${name}-web-server-${x}` },
+      userData:
+        "#!/bin/bash\n" +
+        `echo 'Hello, World! -- from ${vpc_public_subnetids[x]}!' > index.html\n` +
+        "nohup python -m SimpleHTTPServer 80 &",
+    },{ dependsOn: mysecuritygroup });
+    ips.push(myserver.publicIp)
+    hostnames.push(myserver.publicDns)
+
+    // Adding TargetGroupAttachment to servers.
+    new awsx.lb.TargetGroupAttachment(`${name}-alb-target-group-${x}`, {
+      instanceId: myserver.id,
+      targetGroupArn: alb.defaultTargetGroup.arn,
+    }, {dependsOn: alb})
+  }
+
+export const url = pulumi.interpolate`http://${alb.loadBalancer.dnsName}`;

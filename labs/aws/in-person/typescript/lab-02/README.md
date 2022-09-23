@@ -364,14 +364,14 @@ Hello, World!
 Now you will create multiple VM instances, each running the same Python webserver, across all the AWS availability zones in your VPC. 
 
 
-Replace the part of your code that creates the webserver and exports the resulting IP address and hostname with the following:
+We will create a new block of code that creates the webserver and exports the resulting IP address and hostname with the following.  We are keeping the old block so you can compare them:
 
 ```typescript
-...
 // Ec2 servers spread across each az(public in this case)
 export const ips: any[] = [];
 export const hostnames: any[] = [];
 
+//for (let z = 0; z < 3; z++ ) // In case you want more number of servers per az
   for (let x = 0; x < 3; x++ ) {
     const myserver = new aws.ec2.Instance(`${name}-web-server-${x}`, {
       ami: ami_id,
@@ -446,9 +446,9 @@ for i in {0..2}; do curl $(pulumi stack output hostnames | jq -r ".[${i}]"); don
 Note that the webserver number is included in its response:
 
 ```
-Hello, World -- from eu-central-1a!
-Hello, World -- from eu-central-1b!
-Hello, World -- from eu-central-1c!
+Hello, World!
+Hello, World!
+Hello, World!
 ```
 
 ## Step 7 &mdash; Create a Load Balancer
@@ -457,60 +457,47 @@ Needing to loop over the webservers isn't very realistic. You will now create a 
 
 Now via the AWSX package, a collection of helpers that makes things like configuring load balancing easier:
 
-Delete the port 80 `ingress` rule from your security group, leaving behind only the ICMP rule:
+Now right after the security group creation, and before the new VM creation block, add the load balancer creation:
 
 ```typescript
 ...
-const sg = new aws.ec2.SecurityGroup("web-secgrp", {
-    ingress: [
-        { protocol: "icmp", fromPort: 8, toPort: 0, cidrBlocks: ["0.0.0.0/0"] },
-    ],
+// ALB via AWSX
+const alb = new awsx.lb.ApplicationLoadBalancer(`${name}-alb-web-traffic`, {
+  enableHttp2: true,
+  subnetIds: [public_subnet1,public_subnet2,public_subnet3],  // You have to pass in subnetsids otherwise this will get created in the default subnet.
+  securityGroups: [ mysecuritygroup.id ],  
+  listener: {port: 80},
 });
+
+//Export the load balancer
+export const application_load_balancer = alb.loadBalancer;
 ...
 ```
 
-This is required to ensure the security group ingress rules don't conflict with the load balancer's.
-
-Now right after the security group creation, and before the VM creation block, add the load balancer creation:
-
-```typescript
-...
-// Create alb
-const alb = new awsx.lb.ApplicationLoadBalancer("web-traffic", {
-    external: true,
-    securityGroups: [ sg.id ],
-});
-const listener = alb.createListener("web-listener", { port: 80 });
-...
-```
-
-And then replace the VM creation block with the following:
+In the ec2 instance servers block, add the following *TargetGroupAttachment* under
+the **hostname.push** section
 
 ```typescript
 ...
-export const ips: any[] = [];
-export const hostnames: any[] = [];
-for (const az of aws.getAvailabilityZones().names) {
-    const server = new aws.ec2.Instance(`web-server-${az}`, {
-        instanceType: "t2.micro",
-        securityGroups: [ sg.name ],
-        ami: ami,
-        availabilityZone: az,
-        userData: "#!/bin/bash\n"+
-            `echo 'Hello, World -- from ${az}!' > index.html\n` +
-            "nohup python -m SimpleHTTPServer 80 &",
-        tags: { "Name": "web-server" },
-    });
+..
     ips.push(server.publicIp);
     hostnames.push(server.publicDns);
 
-    alb.attachTarget(`web-target-${az}`, server);
+    // Adding TargetGroupAttachment to servers.
+    new awsx.lb.TargetGroupAttachment(`${name}-alb-target-group-${x}`, {
+      instanceId: myserver.id,
+      targetGroupArn: alb.defaultTargetGroup.arn,
+    }, {dependsOn: alb})
 }
+```
 
+Add the loadbalancer url to the end of the **index.ts*
+typescript
+```
 export const url = listener.endpoint.hostname;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step4.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step7.ts).
 
 Deploy these updates:
 

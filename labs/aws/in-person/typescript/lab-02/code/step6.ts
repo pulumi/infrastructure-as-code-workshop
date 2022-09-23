@@ -50,13 +50,6 @@ const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
         description: "Allow inbound access via http",
         self: true, // Add the securitygroup itself as a source
       },
-      { 
-        protocol: "icmp", 
-        fromPort: 8, 
-        toPort: 0, 
-        cidrBlocks: ["0.0.0.0/0"],
-        description: "Required to ensure the security group ingress rules don't conlict with the load balancer's."
-      },
     ],
     egress: [
       { protocol: "tcp", 
@@ -92,6 +85,7 @@ export const private_subnet1 = pulumi.interpolate`${vpc_private_subnetids[0]}`;
 export const private_subnet2 = pulumi.interpolate`${vpc_private_subnetids[1]}`;
 export const private_subnet3 = pulumi.interpolate`${vpc_private_subnetids[2]}`;
 
+// Single ec2 instance
 const myserver = new aws.ec2.Instance(`${name}-web-server`, {
   ami: ami_id,
   instanceType: "t2.nano",
