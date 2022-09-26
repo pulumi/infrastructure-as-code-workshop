@@ -75,21 +75,21 @@ export const security_group_vpc = mysecuritygroup.vpcId;
 export const security_group_egress = mysecuritygroup.egress;
 export const security_group_ingress = mysecuritygroup.ingress;
 
-// Public Subnets
-export const public_subnet1 = pulumi.interpolate`${vpc_public_subnetids[0]}`;
-export const public_subnet2 = pulumi.interpolate`${vpc_public_subnetids[1]}`;
-export const public_subnet3 = pulumi.interpolate`${vpc_public_subnetids[2]}`;
+// ALB via AWSX
+const alb = new awsx.lb.ApplicationLoadBalancer(`${name}-alb-web-traffic`, {
+  enableHttp2: true,
+  subnetIds: [vpc_public_subnetids[0],vpc_public_subnetids[1],vpc_public_subnetids[2]],  // You have to pass in subnetsids otherwise this will get created in the default subnet.
+  securityGroups: [ mysecuritygroup.id ],  
+  listener: {port: 80},
+});
 
-// Private Subnets
-export const private_subnet1 = pulumi.interpolate`${vpc_private_subnetids[0]}`;
-export const private_subnet2 = pulumi.interpolate`${vpc_private_subnetids[1]}`;
-export const private_subnet3 = pulumi.interpolate`${vpc_private_subnetids[2]}`;
+export const application_load_balancer_name = alb.loadBalancer.name;
 
 // Single ec2 instance
 const myserver = new aws.ec2.Instance(`${name}-web-server`, {
   ami: ami_id,
   instanceType: "t2.nano",
-  subnetId: public_subnet1,
+  subnetId: vpc_public_subnetids[0],
   vpcSecurityGroupIds: [mysecuritygroup.id],
   tags: { Name: `${name}-web-server` },
   userData:
@@ -110,14 +110,23 @@ export const hostnames: any[] = [];
     const myserver = new aws.ec2.Instance(`${name}-web-server-${x}`, {
       ami: ami_id,
       instanceType: "t2.nano",
-      subnetId: pulumi.interpolate`${vpc_public_subnetids[x]}`,
+      subnetId:vpc_public_subnetids[x],
       vpcSecurityGroupIds: [mysecuritygroup.id],
       tags: { Name: `${name}-web-server-${x}` },
-      userData:
-        "#!/bin/bash\n" +
-        `echo 'Hello, World! -- from ${vpc_public_subnetids[x]}!' > index.html\n` +
-        "nohup python -m SimpleHTTPServer 80 &",
-    },{ dependsOn: mysecuritygroup });
+      userData:"#!/bin/bash\n" +
+      "echo 'Hello, World!' > index.html\n" +
+      "nohup python -m SimpleHTTPServer 80 &",
+    });
     ips.push(myserver.publicIp)
     hostnames.push(myserver.publicDns)
+
+    // Adding TargetGroupAttachment to servers.
+    new awsx.lb.TargetGroupAttachment(`${name}-alb-target-group-${x}`, {
+      instanceId: myserver.id,
+      targetGroupArn: alb.defaultTargetGroup.arn,
+    }, {dependsOn: alb})
+
   }
+
+export const url_original = alb.loadBalancer.dnsName;
+export const url = pulumi.interpolate`http://${alb.loadBalancer.dnsName}`;

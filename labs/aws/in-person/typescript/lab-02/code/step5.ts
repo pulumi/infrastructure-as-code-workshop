@@ -75,21 +75,11 @@ export const security_group_vpc = mysecuritygroup.vpcId;
 export const security_group_egress = mysecuritygroup.egress;
 export const security_group_ingress = mysecuritygroup.ingress;
 
-// Public Subnets
-export const public_subnet1 = pulumi.interpolate`${vpc_public_subnetids[0]}`;
-export const public_subnet2 = pulumi.interpolate`${vpc_public_subnetids[1]}`;
-export const public_subnet3 = pulumi.interpolate`${vpc_public_subnetids[2]}`;
-
-// Private Subnets
-export const private_subnet1 = pulumi.interpolate`${vpc_private_subnetids[0]}`;
-export const private_subnet2 = pulumi.interpolate`${vpc_private_subnetids[1]}`;
-export const private_subnet3 = pulumi.interpolate`${vpc_private_subnetids[2]}`;
-
 // Single ec2 instance
 const myserver = new aws.ec2.Instance(`${name}-web-server`, {
   ami: ami_id,
   instanceType: "t2.nano",
-  subnetId: public_subnet1,
+  subnetId: vpc_public_subnetids[0],
   vpcSecurityGroupIds: [mysecuritygroup.id],
   tags: { Name: `${name}-web-server` },
   userData:
@@ -100,3 +90,23 @@ const myserver = new aws.ec2.Instance(`${name}-web-server`, {
 
 export const ip = myserver.publicIp;
 export const hostname = myserver.publicDns;
+
+// Ec2 servers spread across each az(public in this case)
+export const ips: any[] = [];
+export const hostnames: any[] = [];
+
+//for (let z = 0; z < 3; z++ ) // In case you want more number of servers per az
+  for (let x = 0; x < 3; x++ ) {
+    const myserver = new aws.ec2.Instance(`${name}-web-server-${x}`, {
+      ami: ami_id,
+      instanceType: "t2.nano",
+      subnetId:vpc_public_subnetids[x],
+      vpcSecurityGroupIds: [mysecuritygroup.id],
+      tags: { Name: `${name}-web-server-${x}` },
+      userData:"#!/bin/bash\n" +
+      "echo 'Hello, World!' > index.html\n" +
+      "nohup python -m SimpleHTTPServer 80 &",
+    });
+    ips.push(myserver.publicIp)
+    hostnames.push(myserver.publicDns)
+  }

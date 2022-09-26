@@ -75,12 +75,18 @@ export const security_group_vpc = mysecuritygroup.vpcId;
 export const security_group_egress = mysecuritygroup.egress;
 export const security_group_ingress = mysecuritygroup.ingress;
 
-// Public Subnets
-export const public_subnet1 = pulumi.interpolate`${vpc_public_subnetids[0]}`;
-export const public_subnet2 = pulumi.interpolate`${vpc_public_subnetids[1]}`;
-export const public_subnet3 = pulumi.interpolate`${vpc_public_subnetids[2]}`;
+// Single ec2 instance
+const myserver = new aws.ec2.Instance(`${name}-web-server`, {
+  ami: ami_id,
+  instanceType: "t2.nano",
+  subnetId: vpc_public_subnetids[0],
+  vpcSecurityGroupIds: [mysecuritygroup.id],
+  tags: { Name: `${name}-web-server` },
+  userData:
+    "#!/bin/bash\n" +
+    "echo 'Hello, World!' > index.html\n" +
+    "nohup python -m SimpleHTTPServer 80 &",
+});
 
-// Private Subnets
-export const private_subnet1 = pulumi.interpolate`${vpc_private_subnetids[0]}`;
-export const private_subnet2 = pulumi.interpolate`${vpc_private_subnetids[1]}`;
-export const private_subnet3 = pulumi.interpolate`${vpc_private_subnetids[2]}`;
+export const ip = myserver.publicIp;
+export const hostname = myserver.publicDns;

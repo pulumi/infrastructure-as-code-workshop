@@ -266,44 +266,13 @@ pulumi up
 
 The important part is that the security group is created in our vpc and not in the `default` vpc. Wemust use securitygroup instead of securitygrouprules(otherwise, this securitygrouprules will create/delete on every update)
 
-## Step 4 &mdash;  Extract the the Subnets via Interpolation
-
-The vm will need a subnet to place this in.  We need to use [Interpolation](https://www.pulumi.com/docs/intro/concepts/inputs-outputs/#outputs-and-strings)
-Interpolation allows us to concatenate string outputs with other strings directly to figure it out.
-
-Place the following block of code below the *security_group_ingress* outputs
-
-Add the following line to the very top of the **index.ts** file.
-```typescript
-import * as pulumi from "@pulumi/pulumi";
-```
-
-Next add the following to the very bottom of the **index.ts** file.
-```typescript
-// Public Subnets
-export const public_subnet1 = pulumi.interpolate`${vpc_public_subnetids[0]}`;
-export const public_subnet2 = pulumi.interpolate`${vpc_public_subnetids[1]}`;
-export const public_subnet3 = pulumi.interpolate`${vpc_public_subnetids[2]}`;
-
-// Private Subnets
-export const private_subnet1 = pulumi.interpolate`${vpc_private_subnetids[0]}`;
-export const private_subnet2 = pulumi.interpolate`${vpc_private_subnetids[1]}`;
-export const private_subnet3 = pulumi.interpolate`${vpc_private_subnetids[2]}`;
-```
-
-We are exporting outputs, no new resources are created.
-
-Deploy the changes:
-```bash
-pulumi up
-```
-## Step 5 &mdash;  Create a virtual machine with our existing security group, vpc and subnet.
+## Step 4 &mdash;  Create a virtual machine with our existing security group, vpc and subnet.
 
 ```typescript
 const myserver = new aws.ec2.Instance(`${name}-web-server`, {
   ami: ami_id,
   instanceType: "t2.nano",
-  subnetId: public_subnet1,
+  subnetId: vpc_public_subnetids[0], 
   vpcSecurityGroupIds: [mysecuritygroup.id],
   tags: { Name: `${name}-web-server` },
   userData:
@@ -322,7 +291,7 @@ export const hostname = myserver.publicDns;
 
 > For most real-world applications, you would want to create a dedicated image for your application, rather than embedding the script in your code like this.
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step5.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step4.ts).
 
 Now deploy the changes:
 ```bash
@@ -359,9 +328,8 @@ Either way you should see a response from the Python webserver:
 Hello, World!
 ```
 
-## Step 6 – Create Multiple Virtual Machines
-Now you will create multiple VM instances, each running the same Python webserver, across all the AWS availability zones in your VPC. 
-
+## Step 5 – Create Multiple Virtual Machines
+Now you will create multiple VM instances, each running the same Python webserver, across all the AWS availability zones in your VPC( one in each public subnet). 
 
 We will create a new block of code that creates the webserver and exports the resulting IP address and hostname with the following.  We are keeping the old block so you can compare them:
 
@@ -375,7 +343,8 @@ export const hostnames: any[] = [];
     const myserver = new aws.ec2.Instance(`${name}-web-server-${x}`, {
       ami: ami_id,
       instanceType: "t2.nano",
-      subnetId: pulumi.interpolate`${vpc_public_subnetids[x]}`,
+      subnetId:vpc_public_subnetids[x],
+      //subnetId: pulumi.interpolate`${vpc_public_subnetids[x]}`,
       vpcSecurityGroupIds: [mysecuritygroup.id],
       tags: { Name: `${name}-web-server-${x}` },
       userData:
@@ -388,7 +357,7 @@ export const hostnames: any[] = [];
   }
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step6.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step5.ts).
 
 Now run a command to update your stack with the new resource definitions:
 
@@ -398,38 +367,29 @@ pulumi up
 
 You will see 3 servers created.
 
-```
-View Live: https://app.pulumi.com/shaht/my-iac-thursday-demo2/dev/updates/66
+```bash
+    View Live: https://app.pulumi.com/shaht/my-iac-thursday-demo2/dev/updates/123
 
-     Type                 Name                       Status      
-     pulumi:pulumi:Stack  my-iac-thursday-demo2-dev              
- +   ├─ aws:ec2:Instance  demo-web-server-2          created     
- +   ├─ aws:ec2:Instance  demo-web-server-1          created     
- +   ├─ aws:ec2:Instance  demo-web-server-0          created     
- -   └─ aws:ec2:Instance  demo-web-server            deleted     
-
-Outputs:
-  - hostname              : "ec2-3-143-235-154.us-east-2.compute.amazonaws.com"
-  + hostnames             : [
-  +     [0]: "ec2-3-144-90-22.us-east-2.compute.amazonaws.com"
-  +     [1]: "ec2-18-117-125-29.us-east-2.compute.amazonaws.com"
-  +     [2]: "ec2-3-16-151-71.us-east-2.compute.amazonaws.com"
-    ]
-  - ip                    : "3.143.235.154"
-  + ips                   : [
-  +     [0]: "3.144.90.22"
-  +     [1]: "18.117.125.29"
-  +     [2]: "3.16.151.71"
-    ]
-
-Resources:
-    + 3 created
-    - 1 deleted
-    4 changes. 31 unchanged
-
-Duration: 1m17s
-
-View Live: https://app.pulumi.com/shaht/my-iac-thursday-demo2/dev/updates/66
+        Type                 Name                       Status      
+        pulumi:pulumi:Stack  my-iac-thursday-demo2-dev              
+    +   ├─ aws:ec2:Instance  demo-web-server-0          created     
+    +   ├─ aws:ec2:Instance  demo-web-server-2          created     
+    +   └─ aws:ec2:Instance  demo-web-server-1          created     
+    
+    Outputs:
+        ami_id                : "ami-0f924dc71d44d23e2"
+        hostname              : "ec2-3-137-167-209.us-east-2.compute.amazonaws.com"
+    + hostnames             : [
+    +     [0]: "ec2-3-131-38-241.us-east-2.compute.amazonaws.com"
+    +     [1]: "ec2-3-143-142-252.us-east-2.compute.amazonaws.com"
+    +     [2]: "ec2-52-15-196-240.us-east-2.compute.amazonaws.com"
+        ]
+        ip                    : "3.137.167.209"
+    + ips                   : [
+    +     [0]: "3.131.38.241"
+    +     [1]: "3.143.142.252"
+    +     [2]: "52.15.196.240"
+        ]
 ```
 
 To test the changes, curl any of the resulting IP addresses or hostnames:
@@ -448,7 +408,7 @@ Hello, World!
 Hello, World!
 ```
 
-## Step 7 &mdash; Create a Load Balancer
+## Step 6 &mdash; Create a Load Balancer
 
 Needing to loop over the webservers isn't very realistic. You will now create a load balancer over them to distribute load evenly.
 
@@ -461,18 +421,18 @@ Right after the security group creation, and before the new VM creation block, a
 // ALB via AWSX
 const alb = new awsx.lb.ApplicationLoadBalancer(`${name}-alb-web-traffic`, {
   enableHttp2: true,
-  subnetIds: [public_subnet1,public_subnet2,public_subnet3],  // You have to pass in subnetsids otherwise this will get created in the default subnet.
+  subnetIds: [vpc_public_subnetids[0],vpc_public_subnetids[1],vpc_public_subnetids[2]],  // You have to pass in subnetsids otherwise this will get created in the default subnet.
   securityGroups: [ mysecuritygroup.id ],  
   listener: {port: 80},
 });
 
 //Export the load balancer
-export const application_load_balancer = alb.loadBalancer;
+export const application_load_balancer_name = alb.loadBalancer.name;
 ...
 ```
 
-In the *const myserver = new aws.ec2.Instance* block, add the following *TargetGroupAttachment* under
-the **hostname.push** section
+In the **const myserver = new aws.ec2.Instance** block, add the following *TargetGroupAttachment* under
+the **hostname.push(myserver.publicDns)** section
 
 ```typescript
 ...
@@ -488,12 +448,15 @@ the **hostname.push** section
 ```
 
 Add the loadbalancer url to the end of the **index.ts*
+Since we want to add `http` to the start of the url we have to use [Interpolation](https://www.pulumi.com/docs/intro/concepts/inputs-outputs/#outputs-and-strings) since it allows us to concatenate string outputs with other strings directly
+without calling **apply**.
 
 ```typescript
-export const url = listener.endpoint.hostname;
+export const url_original = alb.loadBalancer.dnsName;
+export const url = pulumi.interpolate`http://${alb.loadBalancer.dnsName}`;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step7.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step6.ts).
 
 Deploy these updates:
 
@@ -503,53 +466,26 @@ pulumi up
 
 This should result in a fairly large update and, if all goes well, the load balancer's resulting endpoint URL:
 
-```
-Updating (dev):
+```bash
+    View Live: https://app.pulumi.com/shaht/my-iac-thursday-demo2/dev/updates/124
 
-     Type                                          Name                             Status      Info
-     pulumi:pulumi:Stack                           iac-workshop-dev
- ~   ├─ aws:ec2:SecurityGroup                      web-secgrp                       updated     [diff: ~ingress]
- +   ├─ awsx:x:ec2:Vpc                             default-vpc-eb926d81             created
- +   │  ├─ awsx:x:ec2:Subnet                       default-vpc-eb926d81-public-0    created
- +   │  └─ awsx:x:ec2:Subnet                       default-vpc-eb926d81-public-1    created
- +   └─ aws:lb:ApplicationLoadBalancer             web-traffic                      created
- +      ├─ awsx:lb:ApplicationTargetGroup          web-listener                     created
- +      │  ├─ awsx:lb:TargetGroupAttachment        web-target-eu-central-1a         created
- +      │  │  └─ aws:lb:TargetGroupAttachment      web-target-eu-central-1a         created
- +      │  ├─ awsx:lb:TargetGroupAttachment        web-target-eu-central-1b         created
- +      │  │  └─ aws:lb:TargetGroupAttachment      web-target-eu-central-1b         created
- +      │  ├─ awsx:lb:TargetGroupAttachment        web-target-eu-central-1c         created
- +      │  │  └─ aws:lb:TargetGroupAttachment      web-target-eu-central-1c         created
- +      │  └─ aws:lb:TargetGroup                   web-listener                     created
- +      ├─ awsx:x:ec2:SecurityGroup                web-traffic-0                    created
- +      ├─ awsx:lb:ApplicationListener             web-listener                     created
- +      │  ├─ awsx:x:ec2:IngressSecurityGroupRule  web-listener-external-0-ingress  created
- +      │  │  └─ aws:ec2:SecurityGroupRule         web-listener-external-0-ingress  created
- +      │  ├─ awsx:x:ec2:EgressSecurityGroupRule   web-listener-external-0-egress   created
- +      │  │  └─ aws:ec2:SecurityGroupRule         web-listener-external-0-egress   created
- +      │  └─ aws:lb:Listener                      web-listener                     created
- +      └─ aws:lb:LoadBalancer                     web-traffic                      created
-
-Outputs:
-    hostnames: [
-        [0]: "ec2-18-197-184-46.eu-central-1.compute.amazonaws.com"
-        [1]: "ec2-18-196-225-191.eu-central-1.compute.amazonaws.com"
-        [2]: "ec2-35-158-83-62.eu-central-1.compute.amazonaws.com"
-    ]
-    ips      : [
-        [0]: "18.197.184.46"
-        [1]: "18.196.225.191"
-        [2]: "35.158.83.62"
-  + url      : "web-traffic-09348bc-723263075.eu-central-1.elb.amazonaws.com"
-
-Resources:
-    + 20 created
-    ~ 1 updated
-    21 changes. 4 unchanged
-
-Duration: 2m33s
-
-Permalink: https://app.pulumi.com/joeduffy/iac-workshop/dev/updates/3
+        Type                                Name                       Status       
+        pulumi:pulumi:Stack                 my-iac-thursday-demo2-dev              
+    +   ├─ awsx:lb:ApplicationLoadBalancer  demo-alb-web-traffic       created     
+    +   │  ├─ aws:lb:TargetGroup            demo-alb-web-traffic       created     
+    +   │  ├─ aws:lb:LoadBalancer           demo-alb-web-traffic       created     
+    +   │  └─ aws:lb:Listener               demo-alb-web-traffic-0     created     
+    +   ├─ awsx:lb:TargetGroupAttachment    demo-alb-target-group-1    created     
+    +   │  └─ aws:lb:TargetGroupAttachment  demo-alb-target-group-1    created     
+    +   ├─ awsx:lb:TargetGroupAttachment    demo-alb-target-group-0    created     
+    +   │  └─ aws:lb:TargetGroupAttachment  demo-alb-target-group-0    created     
+    +   └─ awsx:lb:TargetGroupAttachment    demo-alb-target-group-2    created     
+    +      └─ aws:lb:TargetGroupAttachment  demo-alb-target-group-2    created     
+    
+    Outputs:
+        ami_id                        : "ami-0f924dc71d44d23e2"
+    + application_load_balancer_name: "demo-alb-web-traffic-24d3f66"
+    + url                           : "http://demo-alb-web-traffic-24d3f66-1343030394.us-east-2.elb.amazonaws.com"
 ```
 
 Now we can curl the load balancer:
@@ -561,19 +497,20 @@ for i in {0..10}; do curl $(pulumi stack output url); done
 Observe that the resulting text changes based on where the request is routed:
 
 ```
-Hello, World -- from eu-central-1b!
-Hello, World -- from eu-central-1c!
-Hello, World -- from eu-central-1a!
-Hello, World -- from eu-central-1b!
-Hello, World -- from eu-central-1b!
-Hello, World -- from eu-central-1a!
-Hello, World -- from eu-central-1c!
-Hello, World -- from eu-central-1a!
-Hello, World -- from eu-central-1c!
-Hello, World -- from eu-central-1b!
+Hello, World!
+Hello, World!
+Hello, World!
+Hello, World!
+Hello, World!
+Hello, World!
+Hello, World!
+Hello, World!
+Hello, World!
+Hello, World!
+
 ```
 
-## Step 5 &mdash; Destroy Everything
+## Step 7 &mdash; Destroy Everything
 
 Finally, destroy the resources and the stack itself:
 
