@@ -55,7 +55,7 @@ export const vpc_public_subnetids = myvpc.publicSubnetIds;
 export const vpc_private_subnetids = myvpc.privateSubnetIds;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step1.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step1.ts).
 
 Now deploy the changes:
 ```bash
@@ -144,7 +144,7 @@ export const security_group_egress = mysecuritygroup.egress;
 export const security_group_ingress = mysecuritygroup.ingress;
 ```
 
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step2.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step2.ts).
 
 Deploy the changes:
 ```bash
@@ -168,15 +168,13 @@ const myami = aws.ec2.getAmi({
     filters: [{ name: "name", values: ["amzn2-ami-k*-hvm-*-x86_64-gp2"] }],
     owners: [ "amazon" ],
     mostRecent: true,
-}).then(ami => ami.id);
+});
 ```
 Next, we want to export the ami to see what it is
 
 ```typescript
 export const ami_id = myami;
 ```
-
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step1.ts).
 
 Now deploy the changes:
 ```bash
@@ -259,7 +257,7 @@ so that it now looks like the following:
 ```typescript
 export const ami_id = myami.then(ami=>ami.id);
 ```
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step3.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/step3.ts).
 
 Now deploy the changes:
 ```bash
