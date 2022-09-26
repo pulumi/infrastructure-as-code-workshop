@@ -6,7 +6,154 @@ zone in your region, and then add a load balancer to spread load across the enti
 > This lab assumes you have a project set up and configured to use AWS. If you don't yet, please complete parts [1](../lab-01/01-creating-a-new-project.md) 
 >and [2](../lab-01/02-configuring-aws.md) of lab-01.
 
-## Step 1 &mdash;  Get the AMI for the VM
+## Step 1 &mdash;  Create the VPC and subnets.
+
+Before we create the VM we need a vpc. We create a vpc with the [awsx](https://www.pulumi.com/registry/packages/awsx/) package.
+
+Add the following awsx package to the `package.json` file:
+```typescript
+ "@pulumi/awsx": "^1.0.0-beta.10"
+```
+
+Now in your terminal run:
+`npm update`
+
+Next, we add the following code near the top of the `index.ts` file:
+Add the following under the last `import` at the top of the file.
+
+```typescript
+import * as awsx from "@pulumi/awsx";
+```
+
+Next add the *name* variable below the last item in the `index.ts`
+
+```typescript
+// Variable we will use for naming purpose
+const name = "demo";
+```
+We will use this throughout for naming purposes
+
+Next add the vpc block below the **name**
+```typescript
+// Creating a VPC with a Single Nat Gateway  Strategy (To save cost)
+const myvpc = new awsx.ec2.Vpc(`${name}-vpc`, {
+  cidrBlock: "10.0.0.0/24",
+  numberOfAvailabilityZones: 3,
+  enableDnsHostnames: true,
+  natGateways: {
+    strategy: "Single", # This is mainly to save cost on nat. You do this only in dev
+  },
+});
+```
+
+Next we add outputs to view what we have created. These will be reference again later in the program.
+```typescript
+// VPC Outputs
+export const vpc_id = myvpc.vpcId;
+export const vpc_natgateways = myvpc.natGateways[0].id;
+export const vpc_public_subnetids = myvpc.publicSubnetIds;
+export const vpc_private_subnetids = myvpc.privateSubnetIds;
+```
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step1.ts).
+
+Now deploy the changes:
+```bash
+pulumi up
+```
+
+View the outputs
+```bash
+pulumi stack output
+```
+
+Results
+```
+Current stack outputs (5):
+    OUTPUT                 VALUE
+    vpc_id                 vpc-0a42558d3b1ec37f3
+    vpc_natgateways        nat-0a8ec79b65d13aeb6
+    vpc_private_subnetids  ["subnet-07d2f9cff6e43c28e","subnet-05393e8a549e289ae","subnet-05eff8502af603d17"]
+    vpc_public_subnetids   ["subnet-04cdf6ac58555b181","subnet-0ad17e2c8aa2f307f","subnet-035553db34c334ca5"]
+```
+
+## Step 2 &mdash;  Create the SecurityGroup in the VPC that we made.
+
+Add the following awsx package to the `package.json` file:
+```typescript
+ "@pulumi/aws": "^5.0.0",
+```
+
+Import the AWS package at the top of the `index.ts` file:
+
+```typescript
+import * as aws from "@pulumi/aws";
+```
+
+Now in your terminal run:
+`npm update`
+
+Add the following code block below the vpc outputs in the `index.ts`.
+
+```typescript
+const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
+    vpcId:myvpc.vpcId,
+    ingress: [
+        { protocol: "tcp", 
+          fromPort: 443, 
+          toPort: 443, 
+          cidrBlocks: ["0.0.0.0/0"],
+          description: "Allow inbound access via https",
+          self: true,  // Add the securitygroup itself as a source. This will create another rule
+        },
+        { 
+        protocol: "tcp", 
+        fromPort: 80, 
+        toPort: 80, 
+        cidrBlocks: ["0.0.0.0/0"],
+        description: "Allow inbound access via http" ,
+        self: true, // Add the securitygroup itself as a source. This will create another rule
+      },
+    ],
+    egress: [
+      { protocol: "tcp", 
+          fromPort: 443, 
+          toPort: 443, 
+          cidrBlocks: ["0.0.0.0/0"],
+          description: "Allow outbound access via https" 
+        },
+        { 
+        protocol: "tcp", 
+        fromPort: 80, 
+        toPort: 80, 
+        cidrBlocks: ["0.0.0.0/0"],
+        description: "Allow outbound access via http" 
+      },
+  ],
+  tags: {"Name": `${name}-securitygroup`},
+}, { parent: myvpc, dependsOn: myvpc });
+```
+
+Update the outputs to validate that everything is correct.  Add the following code after the above code block.
+
+```typescript
+// Exporting security group outputs
+export const security_group_name = mysecuritygroup.id;
+export const security_group_vpc = mysecuritygroup.vpcId;
+export const security_group_egress = mysecuritygroup.egress;
+export const security_group_ingress = mysecuritygroup.ingress;
+```
+
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step2.ts).
+
+Deploy the changes:
+```bash
+pulumi up
+```
+
+The important part is that the security group is created in our vpc and not in the `default` vpc. Wemust use securitygroup instead of securitygrouprules(otherwise, this securitygrouprules will create/delete on every update)
+
+## Step 3 &mdash;  Get the AMI for the VM
 
 Import the AWS package in an empty `index.ts` file:
 
@@ -112,7 +259,7 @@ so that it now looks like the following:
 ```typescript
 export const ami_id = myami.then(ami=>ami.id);
 ```
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step1_5.ts).
+> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step3.ts).
 
 Now deploy the changes:
 ```bash
@@ -131,140 +278,6 @@ Resources:
 
 ```
 Notice that the Output  `ami_id` has exactly what we want: the **ami_id**. Make sure to select **yes** this time.
-
-## Step 2 &mdash;  Create the VPC and subnets.
-
-Before we create the VM we need a vpc. We create a vpc with the [awsx](https://www.pulumi.com/registry/packages/awsx/) package.
-
-Add the following awsx package to the `package.json` file:
-```typescript
- "@pulumi/awsx": "^1.0.0-beta.10"
-```
-
-Now in your terminal run:
-`npm update`
-
-Next, we add the following code near the top of the `index.ts` file:
-Add the following under the last `import` at the top of the file.
-
-```typescript
-import * as awsx from "@pulumi/awsx";
-```
-
-Next add the *name* variable below the last item in the `index.ts`
-
-```typescript
-// Variable we will use for naming purpose
-const name = "demo";
-```
-We will use this throughout for naming purposes
-
-Next add the vpc block below the **name**
-```typescript
-// Creating a VPC with a Single Nat Gateway  Strategy (To save cost)
-const myvpc = new awsx.ec2.Vpc(`${name}-vpc`, {
-  cidrBlock: "10.0.0.0/24",
-  numberOfAvailabilityZones: 3,
-  enableDnsHostnames: true,
-  natGateways: {
-    strategy: "Single", # This is mainly to save cost on nat. You do this only in dev
-  },
-});
-```
-
-Next we add outputs to view what we have created. These will be reference again later in the program.
-```typescript
-// VPC Outputs
-export const vpc_id = myvpc.vpcId;
-export const vpc_natgateways = myvpc.natGateways[0].id;
-export const vpc_public_subnetids = myvpc.publicSubnetIds;
-export const vpc_private_subnetids = myvpc.privateSubnetIds;
-```
-
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step2.ts).
-
-Now deploy the changes:
-```bash
-pulumi up
-```
-
-View the outputs
-```bash
-pulumi stack output
-```
-
-Results
-```
-Current stack outputs (5):
-    OUTPUT                 VALUE
-    ami_id                 ami-0c2ab3b8efb09f272
-    vpc_id                 vpc-0a42558d3b1ec37f3
-    vpc_natgateways        nat-0a8ec79b65d13aeb6
-    vpc_private_subnetids  ["subnet-07d2f9cff6e43c28e","subnet-05393e8a549e289ae","subnet-05eff8502af603d17"]
-    vpc_public_subnetids   ["subnet-04cdf6ac58555b181","subnet-0ad17e2c8aa2f307f","subnet-035553db34c334ca5"]
-```
-
-## Step 3 &mdash;  Create the SecurityGroup in the VPC that we made.
-
-Add the following code block below the vpc outputs in the `index.ts`.
-
-```typescript
-const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
-    vpcId:myvpc.vpcId,
-    ingress: [
-        { protocol: "tcp", 
-          fromPort: 443, 
-          toPort: 443, 
-          cidrBlocks: ["0.0.0.0/0"],
-          description: "Allow inbound access via https",
-          self: true,  // Add the securitygroup itself as a source. This will create another rule
-        },
-        { 
-        protocol: "tcp", 
-        fromPort: 80, 
-        toPort: 80, 
-        cidrBlocks: ["0.0.0.0/0"],
-        description: "Allow inbound access via http" ,
-        self: true, // Add the securitygroup itself as a source. This will create another rule
-      },
-    ],
-    egress: [
-      { protocol: "tcp", 
-          fromPort: 443, 
-          toPort: 443, 
-          cidrBlocks: ["0.0.0.0/0"],
-          description: "Allow outbound access via https" 
-        },
-        { 
-        protocol: "tcp", 
-        fromPort: 80, 
-        toPort: 80, 
-        cidrBlocks: ["0.0.0.0/0"],
-        description: "Allow outbound access via http" 
-      },
-  ],
-  tags: {"Name": `${name}-securitygroup`},
-}, { parent: myvpc, dependsOn: myvpc });
-```
-
-Update the outputs to validate that everything is correct.  Add the following code after the above code block.
-
-```typescript
-// Exporting security group outputs
-export const security_group_name = mysecuritygroup.id;
-export const security_group_vpc = mysecuritygroup.vpcId;
-export const security_group_egress = mysecuritygroup.egress;
-export const security_group_ingress = mysecuritygroup.ingress;
-```
-
-> :white_check_mark: After this change, your `index.ts` should [look like this](./code/03-provisioning-infrastructure/step3.ts).
-
-Deploy the changes:
-```bash
-pulumi up
-```
-
-The important part is that the security group is created in our vpc and not in the `default` vpc. Wemust use securitygroup instead of securitygrouprules(otherwise, this securitygrouprules will create/delete on every update)
 
 ## Step 4 &mdash;  Create a virtual machine with our existing security group, vpc and subnet.
 
@@ -451,6 +464,12 @@ Add the loadbalancer url to the end of the **index.ts*
 Since we want to add `http` to the start of the url we have to use [Interpolation](https://www.pulumi.com/docs/intro/concepts/inputs-outputs/#outputs-and-strings) since it allows us to concatenate string outputs with other strings directly
 without calling **apply**.
 
+Add the following to the top of the `index.ts` file under the below the last import
+```typescript
+import * as pulumi from "@pulumi/pulumi";
+```
+
+Then at the bottom of the `index.ts` add the following 2 outputs.
 ```typescript
 export const url_original = alb.loadBalancer.dnsName;
 export const url = pulumi.interpolate`http://${alb.loadBalancer.dnsName}`;

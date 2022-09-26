@@ -1,16 +1,6 @@
-import * as pulumi from "@pulumi/pulumi";
-import * as aws from "@pulumi/aws";
 import * as awsx from "@pulumi/awsx";
-
-// get Function for AMI
-const myami = aws.ec2.getAmi({
-    filters: [{ name: "name", values: ["amzn2-ami-k*-hvm-*-x86_64-gp2"] }],
-    owners: [ "amazon" ],
-    mostRecent: true,
-});
-
-// Exporting AMI_ID
-export const ami_id = myami.then(ami=>ami.id);
+import * as aws from "@pulumi/aws";
+import * as pulumi from "@pulumi/pulumi";
 
 // Variable we will use for naming purpose
 const name = "demo";
@@ -33,40 +23,40 @@ export const vpc_private_subnetids = myvpc.privateSubnetIds;
 
 // Creating Security Group within VPC
 const mysecuritygroup = new aws.ec2.SecurityGroup(`${name}-securitygroup`, {
-    vpcId:myvpc.vpcId,
-    ingress: [
-        { protocol: "tcp", 
-          fromPort: 443, 
-          toPort: 443, 
-          cidrBlocks: ["0.0.0.0/0"],
-          description: "Allow inbound access via https",
-          self: true, // Add the securitygroup itself as a source
-        },
-        { 
-        protocol: "tcp", 
-        fromPort: 80, 
-        toPort: 80, 
+  vpcId:myvpc.vpcId,
+  ingress: [
+      { protocol: "tcp", 
+        fromPort: 443, 
+        toPort: 443, 
         cidrBlocks: ["0.0.0.0/0"],
-        description: "Allow inbound access via http",
+        description: "Allow inbound access via https",
         self: true, // Add the securitygroup itself as a source
       },
-    ],
-    egress: [
-      { protocol: "tcp", 
-          fromPort: 443, 
-          toPort: 443, 
-          cidrBlocks: ["0.0.0.0/0"],
-          description: "Allow outbound access via https" 
-        },
-        { 
-        protocol: "tcp", 
-        fromPort: 80, 
-        toPort: 80, 
-        cidrBlocks: ["0.0.0.0/0"],
-        description: "Allow outbound access via http" 
-      },
+      { 
+      protocol: "tcp", 
+      fromPort: 80, 
+      toPort: 80, 
+      cidrBlocks: ["0.0.0.0/0"],
+      description: "Allow inbound access via http",
+      self: true, // Add the securitygroup itself as a source
+    },
   ],
-  tags: {"Name": `${name}-securitygroup`},
+  egress: [
+    { protocol: "tcp", 
+        fromPort: 443, 
+        toPort: 443, 
+        cidrBlocks: ["0.0.0.0/0"],
+        description: "Allow outbound access via https" 
+      },
+      { 
+      protocol: "tcp", 
+      fromPort: 80, 
+      toPort: 80, 
+      cidrBlocks: ["0.0.0.0/0"],
+      description: "Allow outbound access via http" 
+    },
+],
+tags: {"Name": `${name}-securitygroup`},
 }, { parent: myvpc, dependsOn: myvpc });
 
 // Exporting security group outputs
@@ -84,6 +74,19 @@ const alb = new awsx.lb.ApplicationLoadBalancer(`${name}-alb-web-traffic`, {
 });
 
 export const application_load_balancer_name = alb.loadBalancer.name;
+
+// get Function for AMI
+const myami = aws.ec2.getAmi({
+  filters: [{ name: "name", values: ["amzn2-ami-k*-hvm-*-x86_64-gp2"] }],
+  owners: [ "amazon" ],
+  mostRecent: true,
+});
+
+// Exporting AMI_ID First Time
+//export const ami_id = myami;
+
+// Exporting AMI_ID with what we want.
+export const ami_id = myami.then(ami=>ami.id);
 
 // Single ec2 instance
 const myserver = new aws.ec2.Instance(`${name}-web-server`, {
@@ -125,7 +128,6 @@ export const hostnames: any[] = [];
       instanceId: myserver.id,
       targetGroupArn: alb.defaultTargetGroup.arn,
     }, {dependsOn: alb})
-
   }
 
 export const url_original = alb.loadBalancer.dnsName;
