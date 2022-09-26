@@ -76,3 +76,39 @@ const myami = aws.ec2.getAmi({
 
 // Exporting AMI_ID with what we want.
 export const ami_id = myami.then(ami=>ami.id);
+
+// Single ec2 instance
+const myserver = new aws.ec2.Instance(`${name}-web-server`, {
+  ami: ami_id,
+  instanceType: "t2.nano",
+  subnetId: vpc_public_subnetids[0],
+  vpcSecurityGroupIds: [mysecuritygroup.id],
+  tags: { Name: `${name}-web-server` },
+  userData:
+    "#!/bin/bash\n" +
+    "echo 'Hello, World!' > index.html\n" +
+    "nohup python -m SimpleHTTPServer 80 &",
+});
+
+export const ip = myserver.publicIp;
+export const hostname = myserver.publicDns;
+
+// Ec2 servers spread across each az(public in this case)
+export const ips: any[] = [];
+export const hostnames: any[] = [];
+
+//for (let z = 0; z < 3; z++ ) // In case you want more number of servers per az
+  for (let x = 0; x < 3; x++ ) {
+    const myserver = new aws.ec2.Instance(`${name}-web-server-${x}`, {
+      ami: ami_id,
+      instanceType: "t2.nano",
+      subnetId:vpc_public_subnetids[x],
+      vpcSecurityGroupIds: [mysecuritygroup.id],
+      tags: { Name: `${name}-web-server-${x}` },
+      userData:"#!/bin/bash\n" +
+      "echo 'Hello, World!' > index.html\n" +
+      "nohup python -m SimpleHTTPServer 80 &",
+    });
+    ips.push(myserver.publicIp)
+    hostnames.push(myserver.publicDns)
+  }

@@ -63,16 +63,3 @@ export const security_group_name = mysecuritygroup.id;
 export const security_group_vpc = mysecuritygroup.vpcId;
 export const security_group_egress = mysecuritygroup.egress;
 export const security_group_ingress = mysecuritygroup.ingress;
-
-// get Function for AMI
-const myami = aws.ec2.getAmi({
-  filters: [{ name: "name", values: ["amzn2-ami-k*-hvm-*-x86_64-gp2"] }],
-  owners: [ "amazon" ],
-  mostRecent: true,
-});
-
-// Exporting AMI_ID First Time
-//export const ami_id = myami;
-
-// Exporting AMI_ID with what we want.
-export const ami_id = myami.then(ami=>ami.id);
